@@ -1,4 +1,4 @@
-from ufc_scraper import get_urls, events, fights, fightstats, fighters
+from scraper import get_urls, events, fights, fightstats, fighters
 def main():
 
     #Scrapes all urls from ufcstats.com
