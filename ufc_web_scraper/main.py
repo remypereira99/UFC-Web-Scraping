@@ -2,9 +2,9 @@ from scraper import get_urls, events, fights, fightstats, fighters
 def main():
 
     #Scrapes all urls from ufcstats.com
-    #get_urls.get_event_urls()
-    #get_urls.get_fight_urls()
-    #get_urls.get_fighter_urls()
+    get_urls.get_event_urls()
+    get_urls.get_fight_urls()
+    get_urls.get_fighter_urls()
 
     #Iterates through urls and scrapes key data into csv files
     events.scrape_events()
