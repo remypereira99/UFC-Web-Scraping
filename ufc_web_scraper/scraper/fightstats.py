@@ -5,10 +5,13 @@ import re
 import csv
 import os
 
+#Define paths for url folder and scraped files folder
+url_path = os.getcwd() + '/urls'
+file_path = os.getcwd() + '/scraped_files'
 
 def filter_duplicate_urls(fight_urls):
-    if 'ufc_fight_stat_data.csv' in os.listdir():
-        with open('ufc_fight_stat_data.csv','r') as csv_file:
+    if 'ufc_fight_stat_data.csv' in os.listdir(file_path):
+        with open(file_path + '/' + 'ufc_fight_stat_data.csv','r') as csv_file:
             reader = csv.DictReader(csv_file)
             scraped_fight_urls = [row['fight_url'] for row in reader]
             for url in scraped_fight_urls:
@@ -140,11 +143,10 @@ def get_grappling_stats(fight_stats,fighter):
 def scrape_fightstats():
     
     #Creates csv file for scraped data
-    if 'ufc_fight_stat_data.csv' not in os.listdir():
-        with open ('ufc_fight_stat_data.csv','w',newline="",encoding='UTF8') as ufc_fighter_data:
+    if 'ufc_fight_stat_data.csv' not in os.listdir(file_path):
+        with open (file_path + '/' + 'ufc_fight_stat_data.csv','w',newline="",encoding='UTF8') as ufc_fighter_data:
             writer = csv.writer(ufc_fighter_data)
-            writer.writerow(['event_id',
-                             'fighter_id',
+            writer.writerow(['fighter_id',
                              'knockdowns',
                              'total_strikes_att',
                              'total_strikes_succ',
@@ -161,8 +163,8 @@ def scrape_fightstats():
         print('Scraping to Existing File - ufc_fighter_data.csv')
 
     #Get fight URLs from file
-    if 'fight_urls.csv' in os.listdir():
-        with open('fight_urls.csv','r') as fight_csv:
+    if 'fight_urls.csv' in os.listdir(url_path):
+        with open(url_path + '/' + 'fight_urls.csv','r') as fight_csv:
             reader = csv.reader(fight_csv)
             fight_urls = [row[0] for row in reader]
     else:
@@ -175,7 +177,7 @@ def scrape_fightstats():
     print(f'Scraping {urls_to_scrape} fights...')
     urls_scraped = 0
     
-    with open('ufc_fight_stat_data.csv','a+') as csv_file:
+    with open(file_path + '/' + 'ufc_fight_stat_data.csv','a+') as csv_file:
         writer = csv.writer(csv_file)
     
         #Iterate through each fight_url to scrape fight stats
@@ -187,8 +189,7 @@ def scrape_fightstats():
             fight_stats = fight_soup.select('p.b-fight-details__table-text')
             
             #Scrape fight stats for first fighter 
-            event_id = fight_soup.h2.text
-            fighter_id = get_fighter_id(fight_soup,fight_stats,1)
+            fighter_name = get_fighter_id(fight_soup,fight_stats,1)
             (knockdowns,
              total_strikes_att,
              total_strikes_succ,
@@ -202,8 +203,7 @@ def scrape_fightstats():
 
             
             #Add fight stats for first fighter to csv
-            writer.writerow([event_id.strip(),
-                            fighter_id.strip(),
+            writer.writerow([fighter_name.strip(),
                             knockdowns.strip(),
                             total_strikes_att.strip(),
                             total_strikes_succ.strip(),
@@ -217,8 +217,7 @@ def scrape_fightstats():
                             url])
 
             #Scrape fight stats for second fighter 
-            event_id = fight_soup.h2.text
-            fighter_id = get_fighter_id(fight_soup,fight_stats,2)
+            fighter_name = get_fighter_id(fight_soup,fight_stats,2)
             (knockdowns,
              total_strikes_att,
              total_strikes_succ,
@@ -231,8 +230,7 @@ def scrape_fightstats():
              ctrl_time) = get_grappling_stats(fight_stats,2)
 
             #Add fight stats for second fighter to csv
-            writer.writerow([event_id.strip(),
-                            fighter_id.strip(),
+            writer.writerow([fighter_name.strip(),
                             knockdowns.strip(),
                             total_strikes_att.strip(),
                             total_strikes_succ.strip(),

@@ -5,12 +5,15 @@ import re
 import csv
 import os
 
+#Define paths for url folder and scraped files folder
+url_path = os.getcwd() + '/urls'
+file_path = os.getcwd() + '/scraped_files'
 
 #Creates csv file for scraped data
 def create_csv_file():
     #If file does not exist, create a new CSV file with column headers
-    if 'ufc_fight_data.csv' not in os.listdir():
-        with open('ufc_fight_data.csv','w',newline='',encoding='UTF8') as ufc_fight_data:
+    if 'ufc_fight_data.csv' not in os.listdir(file_path):
+        with open(file_path + '/' + 'ufc_fight_data.csv','w',newline='',encoding='UTF8') as ufc_fight_data:
             writer = csv.writer(ufc_fight_data)
             writer.writerow(['event_name', 
                              'referee', 
@@ -32,8 +35,8 @@ def create_csv_file():
 
 #Ensure each url is only scraped once when script is run multiple times
 def filter_duplicate_urls(fight_urls):
-    if 'ufc_fight_data.csv' in os.listdir():
-        with open('ufc_fight_data.csv','r') as csv_file:
+    if 'ufc_fight_data.csv' in os.listdir(file_path):
+        with open(file_path + '/' + 'ufc_fight_data.csv','r') as csv_file:
             reader = csv.DictReader(csv_file)
             scraped_fight_urls = [row['fight_url'] for row in reader]
             
@@ -50,7 +53,7 @@ def get_referee(overview):
         return 'NULL'
 
 #Scrape both fighter names
-def get_fighters(fight_details):
+def get_fighters(fight_details,fight_soup):
     try:
         return fight_details[0].text, fight_details[1].text
     except:
@@ -112,8 +115,8 @@ def get_result(select_result,select_result_details):
 def scrape_fights():
     
     #Get fight URLs from file
-    if 'fight_urls.csv' in os.listdir():
-        with open('fight_urls.csv','r') as fight_csv:
+    if 'fight_urls.csv' in os.listdir(url_path):
+        with open(url_path + '/' + 'fight_urls.csv','r') as fight_csv:
             reader = csv.reader(fight_csv)
             fight_urls = [row[0] for row in reader]
     else:
@@ -132,7 +135,7 @@ def scrape_fights():
         print(f'Scraping {urls_to_scrape} fights...')
         urls_scraped = 0
     
-        with open('ufc_fight_data.csv','a+') as csv_file:
+        with open(file_path + '/' + 'ufc_fight_data.csv','a+') as csv_file:
             writer = csv.writer(csv_file)
         
             for url in fight_urls:
@@ -151,7 +154,7 @@ def scrape_fights():
                 #Scrape fight details
                 event_name = fight_soup.h2.text
                 referee = get_referee(overview)
-                f_1,f_2 = get_fighters(fight_details)
+                f_1,f_2 = get_fighters(fight_details,fight_soup)
                 num_rounds = overview[2].text.split(':')[1].strip()[0]
                 title_fight = get_title_fight(fight_type)
                 weight_class = get_weight_class(fight_type)

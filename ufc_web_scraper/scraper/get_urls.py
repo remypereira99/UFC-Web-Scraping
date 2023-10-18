@@ -7,7 +7,13 @@ import time
 
 # Helper function to write URLs to a CSV file
 def write_urls_to_csv(file_name, urls):
-    with open(file_name, 'w', newline='') as csv_file:
+    
+    #Create a new directory for urls
+    os.makedirs('urls',exist_ok=True)
+    path = os.getcwd() + '/urls'
+    
+    #Save file to new directory and add urls to file
+    with open(path + '/' + file_name, 'w', newline='') as csv_file:
         writer = csv.writer(csv_file)
         for url in urls:
             writer.writerow([url])
@@ -34,8 +40,10 @@ def get_event_urls():
 def get_fight_urls():
 
     #Get event URLs from file
-    if 'event_urls.csv' in os.listdir():
-        with open('event_urls.csv','r') as events_csv:
+    path = os.getcwd() + '/urls'
+    
+    if 'event_urls.csv' in os.listdir(path):
+        with open(path + '/' + 'event_urls.csv','r') as events_csv:
             reader = csv.reader(events_csv)
             event_urls = [row[0] for row in reader]
     else:

@@ -7,11 +7,14 @@ from string import ascii_lowercase
 import os
 from datetime import datetime
 
+#Define paths for url folder and scraped files folder
+url_path = os.getcwd() + '/urls'
+file_path = os.getcwd() + '/scraped_files'
 
 #If file does not exist, create a new CSV file with column headers
 def create_csv():
-    if 'ufc_fighter_data.csv' not in os.listdir():
-        with open('ufc_fighter_data.csv','w',newline='',encoding='UTF8') as ufc_fighter_data:
+    if 'ufc_fighter_data.csv' not in os.listdir(file_path):
+        with open(file_path + '/' + 'ufc_fighter_data.csv','w',newline='',encoding='UTF8') as ufc_fighter_data:
             writer = csv.writer(ufc_fighter_data)
             writer.writerow(['fighter_f_name',
                              'fighter_l_name',
@@ -32,8 +35,8 @@ def create_csv():
 
 #Ensure each url is only scraped once when script is run multiple times
 def filter_duplicate_urls(fighter_urls):
-    if 'ufc_fighter_data.csv' in os.listdir():
-        with open('ufc_fighter_data.csv','r') as csv_file:
+    if 'ufc_fighter_data.csv' in os.listdir(file_path):
+        with open(file_path + '/' + 'ufc_fighter_data.csv','r') as csv_file:
             reader = csv.DictReader(csv_file)
             scraped_fighter_urls = [row['fighter_url'] for row in reader]
             
@@ -114,13 +117,12 @@ def parse_dob(dob):
 def scrape_fighters():
     
     #Get fighter URLs from file
-    if 'fighter_urls.csv' in os.listdir():
-        with open('fighter_urls.csv','r') as fighters_csv:
+    if 'fighter_urls.csv' in os.listdir(url_path):
+        with open(url_path + '/' + 'fighter_urls.csv','r') as fighters_csv:
             reader = csv.reader(fighters_csv)
             fighter_urls = [row[0] for row in reader]
     else:
         print("Missing file: fighter_urls.csv - try running 'get_urls.get_fighter_urls()'")
-
 
     #Remove urls that have been scraped already
     filter_duplicate_urls(fighter_urls)
@@ -138,7 +140,7 @@ def scrape_fighters():
         
         print(f'Scraping {urls_to_scrape} fighters...')
 
-        with open('ufc_fighter_data.csv', 'a+') as ufc_fighters:
+        with open(file_path + '/' + 'ufc_fighter_data.csv', 'a+') as ufc_fighters:
             writer = csv.writer(ufc_fighters)
 
             #Iterates through each url and scrapes key details
