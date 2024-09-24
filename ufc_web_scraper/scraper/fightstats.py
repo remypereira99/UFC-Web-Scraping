@@ -186,64 +186,68 @@ def scrape_fightstats():
             fight_url = requests.get(url)
             fight_soup = bs4.BeautifulSoup(fight_url.text,'lxml')
             
-            fight_stats = fight_soup.select('p.b-fight-details__table-text')
-            
-            #Scrape fight stats for first fighter 
-            fighter_name = get_fighter_id(fight_soup,fight_stats,1)
-            (knockdowns,
-             total_strikes_att,
-             total_strikes_succ,
-             sig_strikes_att,
-             sig_strikes_succ) = get_striking_stats(fight_stats,1)
-            (takedown_att,
-             takedown_succ,
-             submission_att,
-             reversals,
-             ctrl_time) = get_grappling_stats(fight_stats,1)
+            try:
+                fight_stats = fight_soup.select('p.b-fight-details__table-text')
+                
+                #Scrape fight stats for first fighter 
+                fighter_name = get_fighter_id(fight_soup,fight_stats,1)
+                (knockdowns,
+                 total_strikes_att,
+                 total_strikes_succ,
+                 sig_strikes_att,
+                 sig_strikes_succ) = get_striking_stats(fight_stats,1)
+                (takedown_att,
+                 takedown_succ,
+                 submission_att,
+                 reversals,
+                 ctrl_time) = get_grappling_stats(fight_stats,1)
 
-            
-            #Add fight stats for first fighter to csv
-            writer.writerow([fighter_name.strip(),
-                            knockdowns.strip(),
-                            total_strikes_att.strip(),
-                            total_strikes_succ.strip(),
-                            sig_strikes_att.strip(),
-                            sig_strikes_succ.strip(),
-                            takedown_att.strip(),
-                            takedown_succ.strip(),
-                            submission_att.strip(),
-                            reversals.strip(),
-                            ctrl_time.strip(),
-                            url])
+                
+                #Add fight stats for first fighter to csv
+                writer.writerow([fighter_name.strip(),
+                                knockdowns.strip(),
+                                total_strikes_att.strip(),
+                                total_strikes_succ.strip(),
+                                sig_strikes_att.strip(),
+                                sig_strikes_succ.strip(),
+                                takedown_att.strip(),
+                                takedown_succ.strip(),
+                                submission_att.strip(),
+                                reversals.strip(),
+                                ctrl_time.strip(),
+                                url])
 
-            #Scrape fight stats for second fighter 
-            fighter_name = get_fighter_id(fight_soup,fight_stats,2)
-            (knockdowns,
-             total_strikes_att,
-             total_strikes_succ,
-             sig_strikes_att,
-             sig_strikes_succ) = get_striking_stats(fight_stats,2)
-            (takedown_att,
-             takedown_succ,
-             submission_att,
-             reversals,
-             ctrl_time) = get_grappling_stats(fight_stats,2)
+                #Scrape fight stats for second fighter 
+                fighter_name = get_fighter_id(fight_soup,fight_stats,2)
+                (knockdowns,
+                 total_strikes_att,
+                 total_strikes_succ,
+                 sig_strikes_att,
+                 sig_strikes_succ) = get_striking_stats(fight_stats,2)
+                (takedown_att,
+                 takedown_succ,
+                 submission_att,
+                 reversals,
+                 ctrl_time) = get_grappling_stats(fight_stats,2)
 
-            #Add fight stats for second fighter to csv
-            writer.writerow([fighter_name.strip(),
-                            knockdowns.strip(),
-                            total_strikes_att.strip(),
-                            total_strikes_succ.strip(),
-                            sig_strikes_att.strip(),
-                            sig_strikes_succ.strip(),
-                            takedown_att.strip(),
-                            takedown_succ.strip(),
-                            submission_att.strip(),
-                            reversals.strip(),
-                            ctrl_time.strip(),
-                            url])
-            
-            urls_scraped += 1
+                #Add fight stats for second fighter to csv
+                writer.writerow([fighter_name.strip(),
+                                knockdowns.strip(),
+                                total_strikes_att.strip(),
+                                total_strikes_succ.strip(),
+                                sig_strikes_att.strip(),
+                                sig_strikes_succ.strip(),
+                                takedown_att.strip(),
+                                takedown_succ.strip(),
+                                submission_att.strip(),
+                                reversals.strip(),
+                                ctrl_time.strip(),
+                                url])
+                
+                urls_scraped += 1
+            except IndexError as e:
+                print(f"Erro ao acessar elemento para a URL {url}: {e}")
+                # Trate o erro adequadamente, como pular esta luta ou retornar valores padrão
         
     print(f'{urls_scraped}/{urls_to_scrape} links successfully scraped')
 

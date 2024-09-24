@@ -153,8 +153,12 @@ def scrape_fights():
 
                 #Scrape fight details
                 event_name = fight_soup.h2.text
-                referee = get_referee(overview)
-                f_1,f_2 = get_fighters(fight_details,fight_soup)
+                try:
+                    referee = get_referee(overview)
+                    f_1, f_2 = get_fighters(fight_details, fight_soup)
+                except AttributeError as e:
+                    print(f"Erro ao obter informações da luta: {e}")
+                    continue  # Skip this fight and move to the next one
                 num_rounds = overview[2].text.split(':')[1].strip()[0]
                 title_fight = get_title_fight(fight_type)
                 weight_class = get_weight_class(fight_type)
