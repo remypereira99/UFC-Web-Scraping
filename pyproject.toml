@@ -5,5 +5,6 @@ description = "Web scraping UFC data"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
+    "pandas>=2.3.1",
     "scrapy>=2.13.3",
 ]
