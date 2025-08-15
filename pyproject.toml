@@ -1,0 +1,7 @@
+[project]
+name = "ufc-web-scraping"
+version = "0.1.0"
+description = "Web scraping UFC data"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
