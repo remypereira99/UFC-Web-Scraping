@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http.response.html import HtmlResponse
@@ -119,3 +119,41 @@ def get_fighter_opponents(response: HtmlResponse) -> str:
     ]
 
     return ", ".join(opponent_id_list)
+
+def get_event_info(response: HtmlResponse, dob_format: str = "%Y-%m-%d") -> Dict[str, str]:
+    event_info_dict: defaultdict = defaultdict()
+
+    event_name_raw: str = response.css('span.b-content__title-highlight::text').get()
+    event_name_clean: str = clean_string(event_name_raw)
+
+    event_date_location: List[str] = response.css('li.b-list__box-list-item::text').getall()
+
+    event_date_raw: str = event_date_location[1]
+    event_date_clean: str = clean_string(event_date_raw)
+    event_date_dt: datetime = datetime.strptime(event_date_clean, "%B %d, %Y")
+    event_date: str = datetime.strftime(event_date_dt, dob_format)
+
+    event_location_raw: str = event_date_location[3]
+    event_location_clean: str = clean_string(event_location_raw)
+    event_location_split: List[str] = event_location_clean.split(", ")
+    if len(event_location_split) == 3:
+        event_city: str = event_location_split[0]
+        event_state: str = event_location_split[1]
+        event_country: str = event_location_split[2]
+    elif len(event_location_split) == 2:
+        event_city: str = event_location_split[0]
+        event_state: str = ""
+        event_country: str = event_location_split[1]
+    else:
+        event_city: str = ""
+        event_state: str = ""
+        event_country: str = ""
+
+    event_info_dict["name"] = event_name_clean
+    event_info_dict["date"] = event_date
+    event_info_dict["location"] = event_location_clean
+    event_info_dict["city"] = event_city
+    event_info_dict["state"] = event_state
+    event_info_dict["country"] = event_country
+    
+    return event_info_dict
