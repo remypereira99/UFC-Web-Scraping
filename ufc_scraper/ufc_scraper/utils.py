@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Tuple, Dict, List
+from typing import Tuple, Dict, List, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http.response.html import HtmlResponse
@@ -199,6 +199,30 @@ def get_weight_class(bout_type: str) -> str:
 
     return weight_class
 
+
+def get_judges_decisions(response: HtmlResponse) -> Dict[str, str]:
+    judge_decision_dict: defaultdict = defaultdict()
+
+    judges_raw: List[str] = response.css('i.b-fight-details__text-item').xpath('./span/text()').getall()[1:]
+    judges_clean: List[str] = [clean_string(judge) for judge in judges_raw]
+    judge_decision_dict["judge_a"] = judges_clean[0]
+    judge_decision_dict["judge_b"] = judges_clean[1]
+    judge_decision_dict["judge_c"] = judges_clean[2]
+
+    score_regex = r"\d{2} - \d{2}\."
+    scores_raw: List[str] = response.css('i.b-fight-details__text-item::text').getall()
+    scores_clean: List[str] = [
+        clean_string(score).replace(".", "") for score in scores_raw if re.search(score_regex, score)
+    ]
+    judge_a_score, judge_b_score, judge_c_score = scores_clean
+    judge_scores = zip(["judge_a", "judge_b", "judge_c"], [judge_a_score, judge_b_score, judge_c_score])
+    for judge, score in judge_scores:
+        judge_decision_dict[f"{judge}_fighter_a_score"] = int(score.split(" - ")[0])
+        judge_decision_dict[f"{judge}_fighter_b_score"] = int(score.split(" - ")[1])
+
+    return judge_decision_dict
+
+
 def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
     fight_dict: defaultdict = defaultdict()
 
@@ -211,18 +235,33 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
     num_rounds = int(time_format_clean.split(" ")[0])
 
     finish_method_raw: str = response.css('.b-fight-details__label:contains("Method:") + i::text').get()
-    finish_method_clean: str = clean_string(finish_method_raw).lower()
-    # if finish_method_clean.split(" ")[0] == "Decision":
+    finish_method_clean: str = clean_string(finish_method_raw)
+    judges_decisions: Dict[str, Union[str, int]] = {
+        "judge_a": "",
+        "judge_b": "",
+        "judge_c": "",
+        "judge_a_fighter_a_score": 0,
+        "judge_a_fighter_b_score": 0,
+        "judge_b_fighter_a_score": 0,
+        "judge_b_fighter_b_score": 0,
+        "judge_c_fighter_a_score": 0,
+        "judge_c_fighter_b_score": 0,
+    }
+    if finish_method_clean.split(" ")[0].lower() == "decision":
+        decision: List[str] = finish_method_clean.split(" - ")
+        finish_method: str = decision[0].lower()
+        finish_submethod_clean: str = decision[1].lower()
 
-    #     finish_submethod_clean = ""
-    # else:
-    #     finish_submethod_raw = (
-    #         response
-    #         .css('.b-fight-details__label:contains("Details:")')
-    #         .xpath('./ancestor::p/text()[normalize-space()]')
-    #         .get()
-    #     )
-    #     finish_submethod_clean = clean_string(finish_submethod_raw)
+        judges_decisions: Dict[str, Union[str, int]] = get_judges_decisions(response)
+    else:
+        finish_method = finish_method_clean.lower()
+        finish_submethod_raw: str = (
+            response
+            .css('.b-fight-details__label:contains("Details:")')
+            .xpath('./ancestor::p/text()[normalize-space()]')
+            .get()
+        )
+        finish_submethod_clean: str = clean_string(finish_submethod_raw)
 
     finish_round_raw: str = response.css('.b-fight-details__label:contains("Round:")').xpath('./parent::*/text()').getall()[1]
     finish_round_clean: int = int(clean_string(finish_round_raw))
@@ -237,11 +276,15 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
 
     fight_dict["weight_class"] = weight_class
     fight_dict["num_rounds"] = num_rounds
-    fight_dict["finish_method"] = finish_method_clean
+    fight_dict["finish_method"] = finish_method
+    fight_dict["finish_submethod"] = finish_submethod_clean
     fight_dict["finish_round"] = finish_round_clean
     fight_dict["finish_time"] = finish_time_clean
     fight_dict["finish_time_minute"] = finish_time_minute
     fight_dict["finish_time_second"] = finish_time_second
     fight_dict["referee"] = referee_clean
+
+    for key in judges_decisions.keys():
+        fight_dict[key] = judges_decisions[key]
 
     return fight_dict
