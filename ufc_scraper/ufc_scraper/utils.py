@@ -1,12 +1,19 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Tuple, Dict
+from typing import Tuple, Dict, List
+from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http.response.html import HtmlResponse
 
+
 def clean_string(raw_string: str) -> str:
     return re.sub(r'\s+', ' ', raw_string).strip()
+
+
+def get_uuid_string(input_string: str) -> str:
+    return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+
 
 def get_fighter_names(response: HtmlResponse) -> Dict[str, str]:
     fighter_names_dict = defaultdict()
@@ -99,20 +106,68 @@ def get_fighter_record(response: HtmlResponse) -> Tuple[str, str, str, str]:
 
 
 def get_fighter_opponents(response: HtmlResponse) -> str:
-    opponent_list_raw = response.css('a.b-link::text').getall()
-    opponent_list_clean = [clean_string(opponent) for opponent in opponent_list_raw]
+    opponent_text_raw = response.css('a.b-link::text').getall()
+    opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
+    opponent_urls = response.css('a.b-link::attr(href)').getall()
+    fighter_url = response.url
+    opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
-    fighter_name_raw = response.css('span.b-content__title-highlight::text').get()
-    fighter_name_clean = clean_string(fighter_name_raw)
-
-    exclusion_list = [":", "UFC", "preview", "DWCS", "vs", "Strikeforce", " - ", "PRIDE"]
-
-    opponent_list_final = [
-        opponent_name for opponent_name in opponent_list_clean if (
-            # Remove fighter's own name and the fight event names
-            opponent_name != fighter_name_clean
-            and all(term not in opponent_name for term in exclusion_list)
-        )
+    text_exclusion_list = [":", "ufc", "preview", "dwcs", "vs", "strikeforce", " - ", "pride", "dream"]
+    opponent_urls_filtered = [
+        opponent_url for opponent_name, opponent_url in opponent_text_urls_list
+        if opponent_url != fighter_url
+        and all(term not in opponent_name.lower() for term in text_exclusion_list)
+    ]
+    opponent_id_list = [
+        get_uuid_string(opponent_url) for opponent_url in opponent_urls_filtered
     ]
 
-    return ", ".join(opponent_list_final)
+    return ", ".join(opponent_id_list)
+
+
+def get_event_info(response: HtmlResponse, dob_format: str = "%Y-%m-%d") -> Dict[str, str]:
+    event_info_dict: defaultdict = defaultdict()
+
+    event_name_raw: str = response.css('span.b-content__title-highlight::text').get()
+    event_name_clean: str = clean_string(event_name_raw)
+
+    event_date_location: List[str] = response.css('li.b-list__box-list-item::text').getall()
+
+    event_date_raw: str = event_date_location[1]
+    event_date_clean: str = clean_string(event_date_raw)
+    event_date_dt: datetime = datetime.strptime(event_date_clean, "%B %d, %Y")
+    event_date: str = datetime.strftime(event_date_dt, dob_format)
+
+    event_location_raw: str = event_date_location[3]
+    event_location_clean: str = clean_string(event_location_raw)
+    event_location_split: List[str] = event_location_clean.split(", ")
+    if len(event_location_split) == 3:
+        event_city: str = event_location_split[0]
+        event_state: str = event_location_split[1]
+        event_country: str = event_location_split[2]
+    elif len(event_location_split) == 2:
+        event_city: str = event_location_split[0]
+        event_state: str = ""
+        event_country: str = event_location_split[1]
+    else:
+        event_city: str = ""
+        event_state: str = ""
+        event_country: str = ""
+
+    event_info_dict["name"] = event_name_clean
+    event_info_dict["date"] = event_date
+    event_info_dict["location"] = event_location_clean
+    event_info_dict["city"] = event_city
+    event_info_dict["state"] = event_state
+    event_info_dict["country"] = event_country
+    
+    return event_info_dict
+
+
+def get_event_fights(response: HtmlResponse) -> str:
+    fight_urls: List[str] = response.css('a.b-flag::attr(href)').getall()
+    fight_ids: List[str] = [
+        get_uuid_string(fight_url) for fight_url in fight_urls
+    ]
+
+    return ", ".join(fight_ids)
