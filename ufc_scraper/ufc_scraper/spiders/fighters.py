@@ -28,9 +28,9 @@ class GetFighters(scrapy.Spider):
         for link in fighter_links:
             if link not in scraped_links:
                 scraped_links.append(link)
-                yield scrapy.Request(link, callback=self.get_fighter_info)
+                yield scrapy.Request(link, callback=self.get_fighters)
 
-    def get_fighter_info(self, response):
+    def get_fighters(self, response):
         fighter_dict = defaultdict()
         
         temp_fighter_dicts = []

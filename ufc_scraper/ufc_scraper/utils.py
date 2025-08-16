@@ -171,3 +171,20 @@ def get_event_fights(response: HtmlResponse) -> str:
     ]
 
     return ", ".join(fight_ids)
+
+
+def get_fighters(response: HtmlResponse) -> Dict[str, str]:
+    fighter_dict: defaultdict = defaultdict()
+
+    all_urls: List[str] = response.css('a.b-link::attr(href)').getall()
+    fighter_a_url: str = all_urls[1]
+    fighter_b_url: str = all_urls[2]
+
+    fighter_a_id: str = get_uuid_string(fighter_a_url)
+    fighter_b_id: str = get_uuid_string(fighter_b_url)
+
+    fighter_dict["fighter_a_id"] = fighter_a_id
+    fighter_dict["fighter_b_id"] = fighter_b_id
+
+    return fighter_dict
+
