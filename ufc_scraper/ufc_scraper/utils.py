@@ -157,3 +157,11 @@ def get_event_info(response: HtmlResponse, dob_format: str = "%Y-%m-%d") -> Dict
     event_info_dict["country"] = event_country
     
     return event_info_dict
+
+def get_event_fights(response: HtmlResponse) -> str:
+    fight_urls: List[str] = response.css('a.b-flag::attr(href)').getall()
+    fight_ids: List[str] = [
+        str(uuid5(namespace=NAMESPACE_URL, name=fight_urls)) for fight_urls in fight_urls
+    ]
+
+    return ", ".join(fight_ids)
