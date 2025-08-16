@@ -2,6 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 import re
 from typing import Tuple, Dict
+from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http.response.html import HtmlResponse
 
@@ -101,20 +102,20 @@ def get_fighter_record(response: HtmlResponse) -> Tuple[str, str, str, str]:
 
 
 def get_fighter_opponents(response: HtmlResponse) -> str:
-    opponent_list_raw = response.css('a.b-link::text').getall()
-    opponent_list_clean = [clean_string(opponent) for opponent in opponent_list_raw]
+    opponent_text_raw = response.css('a.b-link::text').getall()
+    opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
+    opponent_urls = response.css('a.b-link::attr(href)').getall()
+    fighter_url = response.url
+    opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
-    fighter_name_raw = response.css('span.b-content__title-highlight::text').get()
-    fighter_name_clean = clean_string(fighter_name_raw)
-
-    exclusion_list = [":", "ufc", "preview", "dwcs", "vs", "strikeforce", " - ", "pride", "dream"]
-
-    opponent_list_final = [
-        opponent_name for opponent_name in opponent_list_clean if (
-            # Remove fighter's own name and the fight event names
-            opponent_name != fighter_name_clean
-            and all(term not in opponent_name.lower() for term in exclusion_list)
-        )
+    text_exclusion_list = [":", "ufc", "preview", "dwcs", "vs", "strikeforce", " - ", "pride", "dream"]
+    opponent_urls_filtered = [
+        opponent_url for opponent_name, opponent_url in opponent_text_urls_list
+        if opponent_url != fighter_url
+        and all(term not in opponent_name.lower() for term in text_exclusion_list)
+    ]
+    opponent_id_list = [
+        str(uuid5(namespace=NAMESPACE_URL, name=opponent_url)) for opponent_url in opponent_urls_filtered
     ]
 
-    return ", ".join(opponent_list_final)
+    return ", ".join(opponent_id_list)
