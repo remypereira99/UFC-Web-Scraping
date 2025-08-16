@@ -5,7 +5,8 @@ import scrapy
 
 from ufc_scraper.utils import (
     get_uuid_string,
-    get_fighters
+    get_fighters,
+    get_fight_info
 )
 
 class GetFights(scrapy.Spider):
@@ -17,9 +18,9 @@ class GetFights(scrapy.Spider):
     }
 
     async def start(self):
-        urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
+        urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=2"]
         for url in urls:
-            yield scrapy.Request(url=url, callback=self.parse)
+            yield scrapy.Request(url=url, callback=self.get_event_urls)
 
     def get_event_urls(self, response):
         event_links: List[str] = response.css('a.b-link::attr(href)').getall()
@@ -42,6 +43,13 @@ class GetFights(scrapy.Spider):
         event_id: str = get_uuid_string(event_url)
         fight_dict["event_id"] = event_id
 
-        fighters = get_fighters(response)
+        temp_fight_dicts = []
+        temp_fight_dicts.append(get_fighters(response))
+        temp_fight_dicts.append(get_fight_info(response))
+
+        for temp_dict in temp_fight_dicts:
+            print(temp_dict)
+            for key in temp_dict.keys():
+                fight_dict[key] = temp_dict[key]
 
         yield(fight_dict)

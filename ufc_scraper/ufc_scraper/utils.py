@@ -6,6 +6,8 @@ from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http.response.html import HtmlResponse
 
+from ufc_scraper.constants import WEIGHT_CLASSES_LOWER
+
 
 def clean_string(raw_string: str) -> str:
     return re.sub(r'\s+', ' ', raw_string).strip()
@@ -188,3 +190,58 @@ def get_fighters(response: HtmlResponse) -> Dict[str, str]:
 
     return fighter_dict
 
+
+def get_weight_class(bout_type: str) -> str:
+    weight_class = ""
+    for weight_class_lower in WEIGHT_CLASSES_LOWER:
+        if weight_class_lower in bout_type.lower():
+            weight_class = weight_class_lower
+
+    return weight_class
+
+def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
+    fight_dict: defaultdict = defaultdict()
+
+    bout_type_raw: str = response.css("i.b-fight-details__fight-title::text").get()
+    bout_type_clean: str = clean_string(bout_type_raw)
+    weight_class: str = get_weight_class(bout_type_clean)
+
+    time_format_raw: str = response.css('.b-fight-details__label:contains("Time format:")').xpath('./parent::*/text()').getall()[1]
+    time_format_clean: str = clean_string(time_format_raw)
+    num_rounds = int(time_format_clean.split(" ")[0])
+
+    finish_method_raw: str = response.css('.b-fight-details__label:contains("Method:") + i::text').get()
+    finish_method_clean: str = clean_string(finish_method_raw).lower()
+    # if finish_method_clean.split(" ")[0] == "Decision":
+
+    #     finish_submethod_clean = ""
+    # else:
+    #     finish_submethod_raw = (
+    #         response
+    #         .css('.b-fight-details__label:contains("Details:")')
+    #         .xpath('./ancestor::p/text()[normalize-space()]')
+    #         .get()
+    #     )
+    #     finish_submethod_clean = clean_string(finish_submethod_raw)
+
+    finish_round_raw: str = response.css('.b-fight-details__label:contains("Round:")').xpath('./parent::*/text()').getall()[1]
+    finish_round_clean: int = int(clean_string(finish_round_raw))
+
+    finish_time_raw: str = response.css('.b-fight-details__label:contains("Time:")').xpath('./parent::*/text()').getall()[1]
+    finish_time_clean: str = clean_string(finish_time_raw)
+    finish_time_minute: int = int(finish_time_clean.split(":")[0])
+    finish_time_second: int = int(finish_time_clean.split(":")[1])
+
+    referee_raw: str = response.css('.b-fight-details__label:contains("Referee:") + span::text').get()
+    referee_clean: str = clean_string(referee_raw)
+
+    fight_dict["weight_class"] = weight_class
+    fight_dict["num_rounds"] = num_rounds
+    fight_dict["finish_method"] = finish_method_clean
+    fight_dict["finish_round"] = finish_round_clean
+    fight_dict["finish_time"] = finish_time_clean
+    fight_dict["finish_time_minute"] = finish_time_minute
+    fight_dict["finish_time_second"] = finish_time_second
+    fight_dict["referee"] = referee_clean
+
+    return fight_dict
