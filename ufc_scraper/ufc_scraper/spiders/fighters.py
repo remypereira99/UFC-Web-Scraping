@@ -1,9 +1,9 @@
 from collections import defaultdict
-from uuid import uuid5, NAMESPACE_URL
 
 import scrapy
 
 from ufc_scraper.utils import (
+    get_uuid_string,
     get_fighter_names,
     get_fighter_personal_stats,
     get_fighter_record,
@@ -40,7 +40,7 @@ class GetFighters(scrapy.Spider):
         temp_fighter_dicts.append(get_fighter_record(response))
 
         fighter_url = response.url
-        fighter_dict["fighter_id"] = str(uuid5(namespace=NAMESPACE_URL, name=fighter_url))
+        fighter_dict["fighter_id"] = get_uuid_string(fighter_url)
         fighter_dict["url"] = fighter_url
 
         for temp_dict in temp_fighter_dicts:

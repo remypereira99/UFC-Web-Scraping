@@ -11,6 +11,10 @@ def clean_string(raw_string: str) -> str:
     return re.sub(r'\s+', ' ', raw_string).strip()
 
 
+def get_uuid_string(input_string: str) -> str:
+    return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+
+
 def get_fighter_names(response: HtmlResponse) -> Dict[str, str]:
     fighter_names_dict = defaultdict()
     fighter_name_raw = response.css('span.b-content__title-highlight::text').get()
@@ -115,10 +119,11 @@ def get_fighter_opponents(response: HtmlResponse) -> str:
         and all(term not in opponent_name.lower() for term in text_exclusion_list)
     ]
     opponent_id_list = [
-        str(uuid5(namespace=NAMESPACE_URL, name=opponent_url)) for opponent_url in opponent_urls_filtered
+        get_uuid_string(opponent_url) for opponent_url in opponent_urls_filtered
     ]
 
     return ", ".join(opponent_id_list)
+
 
 def get_event_info(response: HtmlResponse, dob_format: str = "%Y-%m-%d") -> Dict[str, str]:
     event_info_dict: defaultdict = defaultdict()
@@ -158,10 +163,11 @@ def get_event_info(response: HtmlResponse, dob_format: str = "%Y-%m-%d") -> Dict
     
     return event_info_dict
 
+
 def get_event_fights(response: HtmlResponse) -> str:
     fight_urls: List[str] = response.css('a.b-flag::attr(href)').getall()
     fight_ids: List[str] = [
-        str(uuid5(namespace=NAMESPACE_URL, name=fight_urls)) for fight_urls in fight_urls
+        get_uuid_string(fight_url) for fight_url in fight_urls
     ]
 
     return ", ".join(fight_ids)
