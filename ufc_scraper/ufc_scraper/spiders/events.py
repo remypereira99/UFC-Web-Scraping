@@ -1,4 +1,5 @@
 from collections import defaultdict
+from typing import Dict, List, Optional, Any
 
 import scrapy
 
@@ -9,28 +10,36 @@ from ufc_scraper.utils import (
 )
 
 class GetEvents(scrapy.Spider):
-    name = "get_events"
+    name: str = "get_events"
 
-    custom_settings = {
+    custom_settings: Dict[str, Any] = {
         'DOWNLOAD_DELAY': 1,
         'RANDOMIZE_DOWNLOAD_DELAY': True,
     }
 
-    start_urls = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
+    start_urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
 
     def parse(self, response):
-        event_links = response.css('a.b-link::attr(href)').getall()
-        scraped_links = []
+        event_links: List[str] = response.css('a.b-link::attr(href)').getall()
+        scraped_links: List[Optional[str]] = []
         for link in event_links:
             if link not in scraped_links:
                 scraped_links.append(link)
                 yield scrapy.Request(link, callback=self.get_event_info)
 
     def get_event_info(self, response):
-        event_dict = defaultdict()
+        event_dict: defaultdict = defaultdict()
 
-        event_url = response.url
+        event_url: str = response.url
         event_dict["event_id"] = get_uuid_string(event_url)
         event_dict["url"] = event_url
+
+        event_info: Dict[str, str] = get_event_info(response)
+
+        for key in event_info.keys():
+            event_dict[key] = event_info[key]
+
+        event_fights: str = get_event_fights(response)
+        event_dict["fights"] = event_fights
 
         yield(event_dict)
