@@ -1,5 +1,5 @@
 from collections import defaultdict
-import re
+import uuid
 
 import scrapy
 
@@ -10,8 +10,8 @@ from ufc_scraper.utils import (
     get_fighter_opponents
 )
 
-class GetFighterLinks(scrapy.Spider):
-    name = "get_fighter_links"
+class GetFighters(scrapy.Spider):
+    name = "get_fighters"
 
     custom_settings = {
         'DOWNLOAD_DELAY': 1,
@@ -21,10 +21,6 @@ class GetFighterLinks(scrapy.Spider):
     start_urls = [
         f'http://ufcstats.com/statistics/fighters?char={letter}&page=all' for letter in 'abcdefghijklmnopqrstuvwxyz'
     ]
-
-    def parse(self, response):
-        fighter_link = response.css('a.b-link::attr(href)').get()
-        yield scrapy.Request(fighter_link, callback=self.get_fighter_info)
 
     def parse(self, response):
         fighter_links = response.css('a.b-link::attr(href)').getall()
@@ -43,14 +39,14 @@ class GetFighterLinks(scrapy.Spider):
         temp_fighter_dicts.append(get_fighter_personal_stats(response))
         temp_fighter_dicts.append(get_fighter_record(response))
 
-
-        fighter_dict["fighter_url"] = response.url
+        fighter_url = response.url
+        fighter_dict["fighter_id"] = uuid.uuid5(namespace=uuid.NAMESPACE_URL, name=fighter_url)
+        fighter_dict["url"] = fighter_url
 
         for temp_dict in temp_fighter_dicts:
             for key in temp_dict.keys():
                 fighter_dict[key] = temp_dict[key]
 
         fighter_dict["opponents"] = get_fighter_opponents(response)
-        
 
         yield(fighter_dict)

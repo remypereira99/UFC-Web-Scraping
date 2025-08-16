@@ -5,8 +5,10 @@ from typing import Tuple, Dict
 
 from scrapy.http.response.html import HtmlResponse
 
+
 def clean_string(raw_string: str) -> str:
     return re.sub(r'\s+', ' ', raw_string).strip()
+
 
 def get_fighter_names(response: HtmlResponse) -> Dict[str, str]:
     fighter_names_dict = defaultdict()
@@ -105,13 +107,13 @@ def get_fighter_opponents(response: HtmlResponse) -> str:
     fighter_name_raw = response.css('span.b-content__title-highlight::text').get()
     fighter_name_clean = clean_string(fighter_name_raw)
 
-    exclusion_list = [":", "UFC", "preview", "DWCS", "vs", "Strikeforce", " - ", "PRIDE"]
+    exclusion_list = [":", "ufc", "preview", "dwcs", "vs", "strikeforce", " - ", "pride", "dream"]
 
     opponent_list_final = [
         opponent_name for opponent_name in opponent_list_clean if (
             # Remove fighter's own name and the fight event names
             opponent_name != fighter_name_clean
-            and all(term not in opponent_name for term in exclusion_list)
+            and all(term not in opponent_name.lower() for term in exclusion_list)
         )
     ]
 
