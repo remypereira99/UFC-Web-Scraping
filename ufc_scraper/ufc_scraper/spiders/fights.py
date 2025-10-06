@@ -6,7 +6,8 @@ import scrapy
 from ufc_scraper.utils import (
     get_uuid_string,
     get_fighters,
-    get_fight_info
+    get_fight_info,
+    get_fight_stats
 )
 
 class GetFights(scrapy.Spider):
@@ -46,6 +47,7 @@ class GetFights(scrapy.Spider):
         temp_fight_dicts = []
         temp_fight_dicts.append(get_fighters(response))
         temp_fight_dicts.append(get_fight_info(response))
+        temp_fight_dicts.append(get_fight_stats(response))
 
         for temp_dict in temp_fight_dicts:
             print(temp_dict)

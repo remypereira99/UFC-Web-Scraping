@@ -288,3 +288,82 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
         fight_dict[key] = judges_decisions[key]
 
     return fight_dict
+
+
+def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
+    fight_stat_summary_split: List[str] = clean_string(fight_stat_summary).split(" of ")
+    landed = int(fight_stat_summary_split[0])
+    attempted = int(fight_stat_summary_split[1])
+
+    return landed, attempted
+
+
+def get_fight_stats(response: HtmlResponse) -> Dict[str, str]:
+    fight_stats_dict: defaultdict = defaultdict()
+
+    fight_stat_summary: List[str] = response.css('p.b-fight-details__table-text::text').getall()
+
+    fighter_a_knockdowns: int = int(clean_string(fight_stat_summary[4]))
+    fighter_b_knockdowns: int = int(clean_string(fight_stat_summary[5]))
+    (
+        fighter_a_significant_strikes_landed,
+        fighter_a_significant_strikes_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[6])
+    (
+        fighter_b_significant_strikes_landed,
+        fighter_b_significant_strikes_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[7])
+    (
+        fighter_a_total_strikes_landed,
+        fighter_a_total_strikes_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[10])
+    (
+        fighter_b_total_strikes_landed,
+        fighter_b_total_strikes_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[11])
+    (
+        fighter_a_takedowns_landed,
+        fighter_a_takedowns_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[12])
+    (
+        fighter_b_takedowns_landed,
+        fighter_b_takedowns_attempted
+    ) = get_fight_stats_from_summary(fight_stat_summary[13])
+    fighter_a_submissions_attempted: int = int(fight_stat_summary[16])
+    fighter_b_submissions_attempted: int = int(fight_stat_summary[17])
+    fighter_a_reversals: int = int(fight_stat_summary[18])
+    fighter_b_reversals: int = int(fight_stat_summary[19])
+    fighter_a_control_time_raw: str = clean_string(fight_stat_summary[20])
+    fighter_b_control_time_raw: str = clean_string(fight_stat_summary[21])
+    fighter_a_control_time_minutes: int = int(fighter_a_control_time_raw.split(":")[0])
+    fighter_b_control_time_minutes: int = int(fighter_b_control_time_raw.split(":")[0])
+    fighter_a_control_time_seconds: int = int(fighter_a_control_time_raw.split(":")[1])
+    fighter_b_control_time_seconds: int = int(fighter_b_control_time_raw.split(":")[1])
+
+    fight_stats_dict["fighter_a_knockdowns"] = fighter_a_knockdowns
+    fight_stats_dict["fighter_b_knockdowns"] = fighter_b_knockdowns
+    fight_stats_dict["fighter_a_significant_strikes_landed"] = fighter_a_significant_strikes_landed
+    fight_stats_dict["fighter_a_significant_strikes_attempted"] = fighter_a_significant_strikes_attempted
+    fight_stats_dict["fighter_b_significant_strikes_landed"] = fighter_b_significant_strikes_landed
+    fight_stats_dict["fighter_b_significant_strikes_attempted"] = fighter_b_significant_strikes_attempted
+    fight_stats_dict["fighter_a_total_strikes_landed"] = fighter_a_total_strikes_landed
+    fight_stats_dict["fighter_a_total_strikes_attempted"] = fighter_a_total_strikes_attempted
+    fight_stats_dict["fighter_b_total_strikes_landed"] = fighter_b_total_strikes_landed
+    fight_stats_dict["fighter_b_total_strikes_attempted"] = fighter_b_total_strikes_attempted
+    fight_stats_dict["fighter_a_takedowns_landed"] = fighter_a_takedowns_landed
+    fight_stats_dict["fighter_a_takedowns_attempted"] = fighter_a_takedowns_attempted
+    fight_stats_dict["fighter_b_takedowns_landed"] = fighter_b_takedowns_landed
+    fight_stats_dict["fighter_b_takedowns_attempted"] = fighter_b_takedowns_attempted
+    fight_stats_dict["fighter_a_submissions_attempted"] = fighter_a_submissions_attempted
+    fight_stats_dict["fighter_b_submissions_attempted"] = fighter_b_submissions_attempted
+    fight_stats_dict["fighter_a_reversals"] = fighter_a_reversals
+    fight_stats_dict["fighter_b_reversals"] = fighter_b_reversals
+    fight_stats_dict["fighter_a_control_time"] = fighter_a_control_time_raw
+    fight_stats_dict["fighter_a_control_time_minutes"] = fighter_a_control_time_minutes
+    fight_stats_dict["fighter_a_control_time_seconds"] = fighter_a_control_time_seconds
+    fight_stats_dict["fighter_b_control_time"] = fighter_b_control_time_raw
+    fight_stats_dict["fighter_b_control_time_minutes"] = fighter_b_control_time_minutes
+    fight_stats_dict["fighter_b_control_time_seconds"] = fighter_b_control_time_seconds
+
+
+    return fight_stats_dict
