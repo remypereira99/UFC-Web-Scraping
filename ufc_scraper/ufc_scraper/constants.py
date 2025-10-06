@@ -1,0 +1,16 @@
+WEIGHT_CLASSES_LOWER = [
+    "women's strawweight",
+    "women's flyweight",
+    "women's bantamweight",
+    "women's featherweight",
+    "flyweight",
+    "bantamweight",
+    "featherweight",
+    "lightweight",
+    "welterweight",
+    "middleweight",
+    "light heavyweight",
+    "heavyweight",
+    "catch weight",
+    "open weight",
+]

@@ -21,13 +21,10 @@ class GetEvents(scrapy.Spider):
 
     def parse(self, response):
         event_links: List[str] = response.css('a.b-link::attr(href)').getall()
-        scraped_links: List[Optional[str]] = []
         for link in event_links:
-            if link not in scraped_links:
-                scraped_links.append(link)
-                yield scrapy.Request(link, callback=self.get_event_info)
+            yield scrapy.Request(link, callback=self.get_events)
 
-    def get_event_info(self, response):
+    def get_events(self, response):
         event_dict: defaultdict = defaultdict()
 
         event_url: str = response.url
