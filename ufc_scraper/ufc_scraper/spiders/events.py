@@ -1,26 +1,25 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 import scrapy
 
-from ufc_scraper.utils import (
-    get_uuid_string,
-    get_event_info,
-    get_event_fights
-)
+from ufc_scraper.utils import get_uuid_string, get_event_info, get_event_fights
+
 
 class GetEvents(scrapy.Spider):
     name: str = "get_events"
 
     custom_settings: Dict[str, Any] = {
-        'DOWNLOAD_DELAY': 1,
-        'RANDOMIZE_DOWNLOAD_DELAY': True,
+        "DOWNLOAD_DELAY": 1,
+        "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    start_urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
+    start_urls: List[str] = [
+        "http://www.ufcstats.com/statistics/events/completed?page=all"
+    ]
 
     def parse(self, response):
-        event_links: List[str] = response.css('a.b-link::attr(href)').getall()
+        event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
             yield scrapy.Request(link, callback=self.get_events)
 
@@ -39,4 +38,4 @@ class GetEvents(scrapy.Spider):
         event_fights: str = get_event_fights(response)
         event_dict["fights"] = event_fights
 
-        yield(event_dict)
+        yield (event_dict)

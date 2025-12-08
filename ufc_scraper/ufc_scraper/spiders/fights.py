@@ -1,5 +1,5 @@
 from collections import defaultdict
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Any
 
 import scrapy
 
@@ -7,15 +7,16 @@ from ufc_scraper.utils import (
     get_uuid_string,
     get_fighters,
     get_fight_info,
-    get_fight_stats
+    get_fight_stats,
 )
+
 
 class GetFights(scrapy.Spider):
     name: str = "get_fights"
 
     custom_settings: Dict[str, Any] = {
-        'DOWNLOAD_DELAY': 1,
-        'RANDOMIZE_DOWNLOAD_DELAY': True,
+        "DOWNLOAD_DELAY": 1,
+        "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
     async def start(self):
@@ -24,12 +25,12 @@ class GetFights(scrapy.Spider):
             yield scrapy.Request(url=url, callback=self.get_event_urls)
 
     def get_event_urls(self, response):
-        event_links: List[str] = response.css('a.b-link::attr(href)').getall()
+        event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
             yield scrapy.Request(link, callback=self.get_fight_urls)
 
     def get_fight_urls(self, response):
-        fight_links: List[str] = response.css('a.b-flag::attr(href)').getall()
+        fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
         for link in fight_links:
             yield scrapy.Request(link, callback=self.get_fights)
 
@@ -40,7 +41,7 @@ class GetFights(scrapy.Spider):
         fight_dict["fight_id"] = get_uuid_string(fight_url)
         fight_dict["url"] = fight_url
 
-        event_url: str = response.css('a.b-link::attr(href)').get()
+        event_url: str = response.css("a.b-link::attr(href)").get()
         event_id: str = get_uuid_string(event_url)
         fight_dict["event_id"] = event_id
 
@@ -54,4 +55,4 @@ class GetFights(scrapy.Spider):
             for key in temp_dict.keys():
                 fight_dict[key] = temp_dict[key]
 
-        yield(fight_dict)
+        yield (fight_dict)
