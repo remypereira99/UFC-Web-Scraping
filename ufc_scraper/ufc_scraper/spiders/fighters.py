@@ -7,23 +7,25 @@ from ufc_scraper.utils import (
     get_fighter_names,
     get_fighter_personal_stats,
     get_fighter_record,
-    get_fighter_opponents
+    get_fighter_opponents,
 )
+
 
 class GetFighters(scrapy.Spider):
     name = "get_fighters"
 
     custom_settings = {
-        'DOWNLOAD_DELAY': 1,
-        'RANDOMIZE_DOWNLOAD_DELAY': True,
+        "DOWNLOAD_DELAY": 1,
+        "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
     start_urls = [
-        f'http://ufcstats.com/statistics/fighters?char={letter}&page=all' for letter in 'abcdefghijklmnopqrstuvwxyz'
+        f"http://ufcstats.com/statistics/fighters?char={letter}&page=all"
+        for letter in "abcdefghijklmnopqrstuvwxyz"
     ]
 
     def parse(self, response):
-        fighter_links = response.css('a.b-link::attr(href)').getall()
+        fighter_links = response.css("a.b-link::attr(href)").getall()
         scraped_links = []
         for link in fighter_links:
             if link not in scraped_links:
@@ -32,7 +34,7 @@ class GetFighters(scrapy.Spider):
 
     def get_fighters(self, response):
         fighter_dict = defaultdict()
-        
+
         temp_fighter_dicts = []
 
         temp_fighter_dicts.append(get_fighter_names(response))
@@ -49,4 +51,4 @@ class GetFighters(scrapy.Spider):
 
         fighter_dict["opponents"] = get_fighter_opponents(response)
 
-        yield(fighter_dict)
+        yield (fighter_dict)
