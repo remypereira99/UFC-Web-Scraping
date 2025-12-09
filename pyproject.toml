@@ -5,8 +5,9 @@ description = "Web scraping UFC data"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pandas>=2.3.1",
-    "pre-commit>=4.5.0",
-    "ruff>=0.14.8",
-    "scrapy>=2.13.3",
+    "mypy==1.19.0",
+    "pandas==2.3.1",
+    "pre-commit==4.5.0",
+    "ruff==0.14.8",
+    "scrapy==2.13.3",
 ]
