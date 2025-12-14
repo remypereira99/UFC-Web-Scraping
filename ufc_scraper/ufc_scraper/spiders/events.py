@@ -7,8 +7,8 @@ from scrapy.http import Response
 from utils import get_uuid_string, get_event_info, get_event_fights
 
 
-class GetEvents(scrapy.Spider):
-    name: str = "get_events"
+class CrawlEvents(scrapy.Spider):
+    name: str = "crawl_events"
 
     custom_settings: Dict[Any, Any] = {
         "DOWNLOAD_DELAY": 1,
