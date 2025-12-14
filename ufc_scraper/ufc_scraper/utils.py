@@ -4,7 +4,7 @@ import re
 from typing import Tuple, Dict, List, Union
 from uuid import uuid5, NAMESPACE_URL
 
-from scrapy.http.response.html import HtmlResponse
+from scrapy.http import Response
 
 from ufc_scraper.constants import WEIGHT_CLASSES_LOWER
 
@@ -17,26 +17,34 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
-def get_fighter_names(response: HtmlResponse) -> Dict[str, str]:
-    fighter_names_dict = defaultdict()
-    fighter_name_raw = response.css("span.b-content__title-highlight::text").get()
-    fighter_name_clean = clean_string(fighter_name_raw)
-    fighter_names = fighter_name_clean.split(" ")
+def get_fighter_names(response: Response) -> Dict[str, str | None]:
+    fighter_names_dict: defaultdict[str, str | None] = defaultdict()
+    fighter_name_query: str = "span.b-content__title-highlight::text"
+    fighter_name_raw: str | None = response.css(fighter_name_query).get()
+    if fighter_name_raw is None:
+        raise ValueError(
+            f"Fighter name missing from {response.url} with query {fighter_name_query}"
+        )
+    fighter_name_clean: str = clean_string(fighter_name_raw)
+    fighter_names: List[str] = fighter_name_clean.split(" ")
 
     fighter_names_dict["full_name"] = " ".join(fighter_names)
     fighter_names_dict["first_name"] = fighter_names[0]
     fighter_names_dict["last_names"] = " ".join(fighter_names[1:])
 
-    fighter_nickname_raw = response.css("p.b-content__Nickname::text").get()
-    fighter_names_dict["nickname"] = clean_string(fighter_nickname_raw)
+    fighter_nickname_query: str = "p.b-content__Nickname::text"
+    fighter_nickname_raw: str | None = response.css(fighter_nickname_query).get()
+    fighter_names_dict["nickname"] = (
+        clean_string(fighter_nickname_raw) if fighter_nickname_raw else None
+    )
 
     return fighter_names_dict
 
 
 def get_fighter_personal_stats(
-    response: HtmlResponse, dob_format: str = "%Y-%m-%d"
-) -> Dict[str, str]:
-    fighter_stats_dict = defaultdict()
+    response: Response, dob_format: str = "%Y-%m-%d"
+) -> Dict[str, Union[str, int, None, float]]:
+    fighter_stats_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
     fighter_stats = response.css("li.b-list__box-list-item::text").getall()
 
     fighter_height_raw = fighter_stats[1]
@@ -68,7 +76,7 @@ def get_fighter_personal_stats(
         fighter_reach_cm = 0
     else:
         fighter_reach_in = int(fighter_reach_clean)
-        fighter_reach_cm = int(fighter_reach_clean) * 2.54
+        fighter_reach_cm = int(float(fighter_reach_clean) * 2.54)
 
     fighter_stance_raw = fighter_stats[7]
     fighter_stance_clean = clean_string(fighter_stance_raw)
@@ -93,10 +101,15 @@ def get_fighter_personal_stats(
     return fighter_stats_dict
 
 
-def get_fighter_record(response: HtmlResponse) -> Tuple[str, str, str, str]:
-    fighter_record_dict = defaultdict()
+def get_fighter_record(response: Response) -> Dict[str, Union[str, int]]:
+    fighter_record_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
-    fighter_record_raw = response.css("span.b-content__title-record::text").get()
+    fighter_record_query: str = "span.b-content__title-record::text"
+    fighter_record_raw: str | None = response.css(fighter_record_query).get()
+    if not fighter_record_raw:
+        raise ValueError(
+            f"Fighter record missing from {response.url} with query {fighter_record_query}"
+        )
     fighter_record_clean = clean_string(fighter_record_raw)
     fighter_record = fighter_record_clean.split(": ")[1]
     fighter_record_dict["wins"] = int(fighter_record.split("-")[0])
@@ -115,7 +128,7 @@ def get_fighter_record(response: HtmlResponse) -> Tuple[str, str, str, str]:
     return fighter_record_dict
 
 
-def get_fighter_opponents(response: HtmlResponse) -> str:
+def get_fighter_opponents(response: Response) -> str:
     opponent_text_raw = response.css("a.b-link::text").getall()
     opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
     opponent_urls = response.css("a.b-link::attr(href)").getall()
@@ -146,12 +159,15 @@ def get_fighter_opponents(response: HtmlResponse) -> str:
     return ", ".join(opponent_id_list)
 
 
-def get_event_info(
-    response: HtmlResponse, dob_format: str = "%Y-%m-%d"
-) -> Dict[str, str]:
-    event_info_dict: defaultdict = defaultdict()
+def get_event_info(response: Response, dob_format: str = "%Y-%m-%d") -> Dict[str, str]:
+    event_info_dict: defaultdict[str, str] = defaultdict()
 
-    event_name_raw: str = response.css("span.b-content__title-highlight::text").get()
+    event_name_query: str = "span.b-content__title-highlight::text"
+    event_name_raw: str | None = response.css(event_name_query).get()
+    if not event_name_raw:
+        raise ValueError(
+            f"Event name missing from {response.url} with query {event_name_query}"
+        )
     event_name_clean: str = clean_string(event_name_raw)
 
     event_date_location: List[str] = response.css(
@@ -166,18 +182,21 @@ def get_event_info(
     event_location_raw: str = event_date_location[3]
     event_location_clean: str = clean_string(event_location_raw)
     event_location_split: List[str] = event_location_clean.split(", ")
+    event_city: str
+    event_state: str
+    event_country: str
     if len(event_location_split) == 3:
-        event_city: str = event_location_split[0]
-        event_state: str = event_location_split[1]
-        event_country: str = event_location_split[2]
+        event_city = event_location_split[0]
+        event_state = event_location_split[1]
+        event_country = event_location_split[2]
     elif len(event_location_split) == 2:
-        event_city: str = event_location_split[0]
-        event_state: str = ""
-        event_country: str = event_location_split[1]
+        event_city = event_location_split[0]
+        event_state = ""
+        event_country = event_location_split[1]
     else:
-        event_city: str = ""
-        event_state: str = ""
-        event_country: str = ""
+        event_city = ""
+        event_state = ""
+        event_country = ""
 
     event_info_dict["name"] = event_name_clean
     event_info_dict["date"] = event_date
@@ -189,15 +208,15 @@ def get_event_info(
     return event_info_dict
 
 
-def get_event_fights(response: HtmlResponse) -> str:
+def get_event_fights(response: Response) -> str:
     fight_urls: List[str] = response.css("a.b-flag::attr(href)").getall()
     fight_ids: List[str] = [get_uuid_string(fight_url) for fight_url in fight_urls]
 
     return ", ".join(fight_ids)
 
 
-def get_fighters(response: HtmlResponse) -> Dict[str, str]:
-    fighter_dict: defaultdict = defaultdict()
+def get_fighters(response: Response) -> Dict[str, Union[str, int]]:
+    fighter_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
     all_urls: List[str] = response.css("a.b-link::attr(href)").getall()
     fighter_a_url: str = all_urls[1]
@@ -221,8 +240,8 @@ def get_weight_class(bout_type: str) -> str:
     return weight_class
 
 
-def get_judges_decisions(response: HtmlResponse) -> Dict[str, str]:
-    judge_decision_dict: defaultdict = defaultdict()
+def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
+    judge_decision_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
     judges_raw: List[str] = (
         response.css("i.b-fight-details__text-item").xpath("./span/text()").getall()[1:]
@@ -250,10 +269,15 @@ def get_judges_decisions(response: HtmlResponse) -> Dict[str, str]:
     return judge_decision_dict
 
 
-def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
-    fight_dict: defaultdict = defaultdict()
+def get_fight_info(response: Response) -> Dict[str, Union[str, int]]:
+    fight_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
-    bout_type_raw: str = response.css("i.b-fight-details__fight-title::text").get()
+    bout_type_query: str = "i.b-fight-details__fight-title::text"
+    bout_type_raw: Union[str, None] = response.css(bout_type_query).get()
+    if not bout_type_raw:
+        raise ValueError(
+            f"Bout type missing from {response.url} with query {bout_type_query}"
+        )
     bout_type_clean: str = clean_string(bout_type_raw)
     weight_class: str = get_weight_class(bout_type_clean)
 
@@ -265,9 +289,12 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
     time_format_clean: str = clean_string(time_format_raw)
     num_rounds = int(time_format_clean.split(" ")[0])
 
-    finish_method_raw: str = response.css(
-        '.b-fight-details__label:contains("Method:") + i::text'
-    ).get()
+    finish_method_query: str = ".b-fight-details__label:contains('Method:') + i::text"
+    finish_method_raw: Union[str, None] = response.css(finish_method_query).get()
+    if not finish_method_raw:
+        raise ValueError(
+            f"Finish method missing from {response.url} with query {finish_method_query}"
+        )
     finish_method_clean: str = clean_string(finish_method_raw)
     judges_decisions: Dict[str, Union[str, int]] = {
         "judge_a": "",
@@ -285,15 +312,19 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
         finish_method: str = decision[0].lower()
         finish_submethod_clean: str = decision[1].lower()
 
-        judges_decisions: Dict[str, Union[str, int]] = get_judges_decisions(response)
+        judges_decisions = get_judges_decisions(response)
     else:
         finish_method = finish_method_clean.lower()
-        finish_submethod_raw: str = (
-            response.css('.b-fight-details__label:contains("Details:")')
-            .xpath("./ancestor::p/text()[normalize-space()]")
-            .get()
+        finish_submethod_query: str = ".b-fight-details__label:contains('Details:')"
+        finish_submethod_xpath: str = "./ancestor::p/text()[normalize-space()]"
+        finish_submethod_raw: Union[str, None] = (
+            response.css(finish_submethod_query).xpath(finish_submethod_xpath).get()
         )
-        finish_submethod_clean: str = clean_string(finish_submethod_raw)
+        if not finish_submethod_raw:
+            raise ValueError(
+                f"Finish submethod missing from {response.url} with query {finish_submethod_query}"
+            )
+        finish_submethod_clean = clean_string(finish_submethod_raw)
 
     finish_round_raw: str = (
         response.css('.b-fight-details__label:contains("Round:")')
@@ -311,9 +342,12 @@ def get_fight_info(response: HtmlResponse) -> Dict[str, str]:
     finish_time_minute: int = int(finish_time_clean.split(":")[0])
     finish_time_second: int = int(finish_time_clean.split(":")[1])
 
-    referee_raw: str = response.css(
-        '.b-fight-details__label:contains("Referee:") + span::text'
-    ).get()
+    referee_query: str = ".b-fight-details__label:contains('Referee:') + span::text"
+    referee_raw: Union[str, None] = response.css(referee_query).get()
+    if not referee_raw:
+        raise ValueError(
+            f"Referee missing from {response.url} with query {referee_query}"
+        )
     referee_clean: str = clean_string(referee_raw)
 
     fight_dict["weight_class"] = weight_class
@@ -340,8 +374,8 @@ def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
     return landed, attempted
 
 
-def get_fight_stats(response: HtmlResponse) -> Dict[str, str]:
-    fight_stats_dict: defaultdict = defaultdict()
+def get_fight_stats(response: Response) -> Dict[str, Union[str, int]]:
+    fight_stats_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
     headers = response.css(
         "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
