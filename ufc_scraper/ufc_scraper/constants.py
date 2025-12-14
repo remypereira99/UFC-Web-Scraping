@@ -1,4 +1,6 @@
-WEIGHT_CLASSES_LOWER = [
+from typing import List
+
+WEIGHT_CLASSES_LOWER: List[str] = [
     "women's strawweight",
     "women's flyweight",
     "women's bantamweight",
