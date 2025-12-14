@@ -4,7 +4,7 @@ from typing import Any, AsyncGenerator, Dict, List, Union
 import scrapy
 from scrapy.http import Response
 
-from ufc_scraper.utils import (
+from utils import (
     get_uuid_string,
     get_fighters,
     get_fight_info,

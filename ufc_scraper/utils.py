@@ -6,7 +6,7 @@ from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from ufc_scraper.constants import WEIGHT_CLASSES_LOWER
+from constants import WEIGHT_CLASSES_LOWER
 
 
 def clean_string(raw_string: str) -> str:
@@ -17,8 +17,8 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
-def get_fighter_names(response: Response) -> Dict[str, str | None]:
-    fighter_names_dict: defaultdict[str, str | None] = defaultdict()
+def get_fighter_names(response: Response) -> Dict[str, Union[str, int, None, float]]:
+    fighter_names_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
     fighter_name_query: str = "span.b-content__title-highlight::text"
     fighter_name_raw: str | None = response.css(fighter_name_query).get()
     if fighter_name_raw is None:
@@ -101,8 +101,8 @@ def get_fighter_personal_stats(
     return fighter_stats_dict
 
 
-def get_fighter_record(response: Response) -> Dict[str, Union[str, int]]:
-    fighter_record_dict: defaultdict[str, Union[str, int]] = defaultdict()
+def get_fighter_record(response: Response) -> Dict[str, Union[str, int, None, float]]:
+    fighter_record_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
 
     fighter_record_query: str = "span.b-content__title-record::text"
     fighter_record_raw: str | None = response.css(fighter_record_query).get()
