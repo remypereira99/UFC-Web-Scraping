@@ -4,6 +4,7 @@ from typing import Dict, List, Any
 import scrapy
 from scrapy.http import Response
 
+from entities import Event
 from utils import get_uuid_string, get_event_info, get_event_fights
 
 
@@ -38,5 +39,6 @@ class CrawlEvents(scrapy.Spider):
 
         event_fights: str = get_event_fights(response)
         event_dict["fights"] = event_fights
+        event: Event = Event(**event_dict)
 
-        yield (event_dict)
+        yield (event)

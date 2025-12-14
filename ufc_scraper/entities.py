@@ -56,9 +56,12 @@ class FighterRecord:
 
 @dataclass
 class Event:
+    event_id: str
+    url: str
     name: str
     date: str
     location: str
     city: str
     state: str
     country: str
+    fights: str
