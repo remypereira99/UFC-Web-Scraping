@@ -1,8 +1,10 @@
 from collections import defaultdict
+from typing import Any, Union
 
 import scrapy
+from scrapy.http import Response
 
-from ufc_scraper.utils import (
+from utils import (
     get_uuid_string,
     get_fighter_names,
     get_fighter_personal_stats,
@@ -24,7 +26,7 @@ class GetFighters(scrapy.Spider):
         for letter in "abcdefghijklmnopqrstuvwxyz"
     ]
 
-    def parse(self, response):
+    def parse(self, response: Response) -> Any:
         fighter_links = response.css("a.b-link::attr(href)").getall()
         scraped_links = []
         for link in fighter_links:
@@ -32,8 +34,8 @@ class GetFighters(scrapy.Spider):
                 scraped_links.append(link)
                 yield scrapy.Request(link, callback=self.get_fighters)
 
-    def get_fighters(self, response):
-        fighter_dict = defaultdict()
+    def get_fighters(self, response: Response) -> Any:
+        fighter_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
 
         temp_fighter_dicts = []
 
