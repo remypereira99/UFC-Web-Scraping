@@ -1,4 +1,3 @@
-from collections import defaultdict
 from typing import Dict, List, Any
 
 import scrapy
@@ -26,7 +25,7 @@ class CrawlEvents(scrapy.Spider):
             yield scrapy.Request(link, callback=self.get_events)
 
     def get_events(self, response: Response) -> Any:
-        event_dict: defaultdict[str, str] = defaultdict()
+        event_dict: Dict[str, str] = {}
 
         event_url: str = response.url
         event_dict["event_id"] = get_uuid_string(event_url)
