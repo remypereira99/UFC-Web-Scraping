@@ -6,7 +6,7 @@ from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from entities import Fighter
+from entities import Fighter, Event
 from constants import WEIGHT_CLASSES_LOWER
 
 
@@ -153,13 +153,14 @@ def get_fighter_info(response: Response) -> Fighter:
     return fighter_info
 
 
-def get_event_info(
-    response: Response, dob_format: str = "%Y-%m-%d"
-) -> Dict[str, Union[str, None]]:
-    event_info_dict: defaultdict[str, Union[str, None]] = defaultdict()
+def get_event_info(response: Response) -> Event:
+    url: str = response.url
+    event_id = get_uuid_string(url)
 
-    event_name_query: str = "span.b-content__title-highlight::text"
-    event_name_raw: str | None = response.css(event_name_query).get()
+    event_name_query = "span.b-content__title-highlight::text"
+    fight_urls_query = "a.b-flag::attr(href)"
+
+    event_name_raw = response.css(event_name_query).get()
     if not event_name_raw:
         raise ValueError(
             f"Event name missing from {response.url} with query {event_name_query}"
@@ -173,7 +174,7 @@ def get_event_info(
     event_date_raw: str = event_date_location[1]
     event_date_clean: str = clean_string(event_date_raw)
     event_date_dt: datetime = datetime.strptime(event_date_clean, "%B %d, %Y")
-    event_date: str = datetime.strftime(event_date_dt, dob_format)
+    event_date: str = datetime.strftime(event_date_dt, "%Y-%m-%d")
 
     event_location_raw: str = event_date_location[3]
     event_location_clean: str = clean_string(event_location_raw)
@@ -194,20 +195,28 @@ def get_event_info(
         event_state = None
         event_country = None
 
-    event_info_dict["name"] = event_name_clean
-    event_info_dict["date"] = event_date
-    event_info_dict["city"] = event_city
-    event_info_dict["state"] = event_state
-    event_info_dict["country"] = event_country
+    name = event_name_clean
+    date = event_date
+    city = event_city
+    state = event_state
+    country = event_country
 
-    return event_info_dict
+    fight_urls = response.css(fight_urls_query).getall()
+    fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
+    fights = ", ".join(fight_ids)
 
+    event_info = Event(
+        event_id=event_id,
+        url=url,
+        name=name,
+        date=date,
+        city=city,
+        state=state,
+        country=country,
+        fights=fights,
+    )
 
-def get_event_fights(response: Response) -> str:
-    fight_urls: List[str] = response.css("a.b-flag::attr(href)").getall()
-    fight_ids: List[str] = [get_uuid_string(fight_url) for fight_url in fight_urls]
-
-    return ", ".join(fight_ids)
+    return event_info
 
 
 def get_fighters(response: Response) -> Dict[str, Union[str, int]]:

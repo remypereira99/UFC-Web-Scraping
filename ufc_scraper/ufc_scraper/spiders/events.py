@@ -25,19 +25,6 @@ class CrawlEvents(scrapy.Spider):
             yield scrapy.Request(link, callback=self.get_events)
 
     def get_events(self, response: Response) -> Any:
-        event_dict: Dict[str, str] = {}
-
-        event_url: str = response.url
-        event_dict["event_id"] = get_uuid_string(event_url)
-        event_dict["url"] = event_url
-
-        event_info: Dict[str, str] = get_event_info(response)
-
-        for key in event_info.keys():
-            event_dict[key] = event_info[key]
-
-        event_fights: str = get_event_fights(response)
-        event_dict["fights"] = event_fights
-        event: Event = Event(**event_dict)
+        event = get_event_info(response)
 
         yield (event)
