@@ -238,8 +238,8 @@ def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
         ["judge_a", "judge_b", "judge_c"], [judge_a_score, judge_b_score, judge_c_score]
     )
     for judge, score in judge_scores:
-        judge_decision_dict[f"{judge}_fighter_a_score"] = int(score.split(" - ")[0])
-        judge_decision_dict[f"{judge}_fighter_b_score"] = int(score.split(" - ")[1])
+        judge_decision_dict[f"{judge}_fighter_1_score"] = int(score.split(" - ")[0])
+        judge_decision_dict[f"{judge}_fighter_2_score"] = int(score.split(" - ")[1])
 
     return judge_decision_dict
 
@@ -256,15 +256,17 @@ def get_fight_info(response: Response) -> Fight:
     finish_round_query = ".b-fight-details__label:contains('Round:')"
     finish_time_query = ".b-fight-details__label:contains('Time:')"
     referee_query = ".b-fight-details__label:contains('Referee:') + span::text"
+    judges_query = "i.b-fight-details__text-item"
 
     all_parent_text_xpath = "./parent::*/text()"
     finish_submethod_xpath = "./ancestor::p/text()[normalize-space()]"
+    judges_xpath = "./span/text()"
 
     all_urls: List[str] = response.css(fighter_url_query).getall()
-    fighter_a_url = all_urls[1]
-    fighter_b_url = all_urls[2]
-    fighter_a_id = get_uuid_string(fighter_a_url)
-    fighter_b_id = get_uuid_string(fighter_b_url)
+    fighter_1_url = all_urls[1]
+    fighter_2_url = all_urls[2]
+    fighter_1_id = get_uuid_string(fighter_1_url)
+    fighter_2_id = get_uuid_string(fighter_2_url)
 
     bout_type_raw: Union[str, None] = response.css(bout_type_query).get()
     if not bout_type_raw:
@@ -325,11 +327,17 @@ def get_fight_info(response: Response) -> Fight:
         )
     referee = clean_string(referee_raw)
 
+    judges_raw: List[str] = response.css(judges_query).xpath(judges_xpath).getall()[1:]
+    judges_clean: List[str] = [clean_string(judge) for judge in judges_raw]
+    judge_1_id = get_uuid_string(judges_clean[0])
+    judge_2_id = get_uuid_string(judges_clean[1])
+    judge_3_id = get_uuid_string(judges_clean[2])
+
     return Fight(
         fight_id=fight_id,
         url=url,
-        fighter_a_id=fighter_a_id,
-        fighter_b_id=fighter_b_id,
+        fighter_1_id=fighter_1_id,
+        fighter_2_id=fighter_2_id,
         weight_class=weight_class,
         num_rounds=num_rounds,
         finish_method=finish_method,
@@ -338,4 +346,7 @@ def get_fight_info(response: Response) -> Fight:
         finish_time_minute=finish_time_minute,
         finish_time_second=finish_time_second,
         referee=referee,
+        judge_1_id=judge_1_id,
+        judge_2_id=judge_2_id,
+        judge_3_id=judge_3_id,
     )
