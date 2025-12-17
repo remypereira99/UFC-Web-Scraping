@@ -17,19 +17,19 @@ class CrawlFights(scrapy.Spider):
     async def start(self) -> AsyncGenerator[Any, Any]:
         urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=2"]
         for url in urls:
-            yield scrapy.Request(url=url, callback=self.get_event_urls)
+            yield scrapy.Request(url=url, callback=self._get_event_urls)
 
-    def get_event_urls(self, response: Response) -> Any:
+    def _get_event_urls(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
-            yield scrapy.Request(link, callback=self.get_fight_urls)
+            yield scrapy.Request(link, callback=self._get_fight_urls)
 
-    def get_fight_urls(self, response: Response) -> Any:
+    def _get_fight_urls(self, response: Response) -> Any:
         fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
         for link in fight_links:
-            yield scrapy.Request(link, callback=self.get_fights)
+            yield scrapy.Request(link, callback=self._get_fights)
 
-    def get_fights(self, response: Response) -> Any:
+    def _get_fights(self, response: Response) -> Any:
         fight = get_fight_info(response)
 
         yield fight
