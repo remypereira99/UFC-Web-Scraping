@@ -1,20 +1,13 @@
-from collections import defaultdict
-from typing import Any, Union
+from typing import Any
 
 import scrapy
 from scrapy.http import Response
 
-from utils import (
-    get_uuid_string,
-    get_fighter_names,
-    get_fighter_personal_stats,
-    get_fighter_record,
-    get_fighter_opponents,
-)
+from utils import get_fighter_info
 
 
-class GetFighters(scrapy.Spider):
-    name = "get_fighters"
+class CrawlFighters(scrapy.Spider):
+    name = "crawl_fighters"
 
     custom_settings = {
         "DOWNLOAD_DELAY": 1,
@@ -35,22 +28,6 @@ class GetFighters(scrapy.Spider):
                 yield scrapy.Request(link, callback=self.get_fighters)
 
     def get_fighters(self, response: Response) -> Any:
-        fighter_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
+        fighter = get_fighter_info(response)
 
-        temp_fighter_dicts = []
-
-        temp_fighter_dicts.append(get_fighter_names(response))
-        temp_fighter_dicts.append(get_fighter_personal_stats(response))
-        temp_fighter_dicts.append(get_fighter_record(response))
-
-        fighter_url = response.url
-        fighter_dict["fighter_id"] = get_uuid_string(fighter_url)
-        fighter_dict["url"] = fighter_url
-
-        for temp_dict in temp_fighter_dicts:
-            for key in temp_dict.keys():
-                fighter_dict[key] = temp_dict[key]
-
-        fighter_dict["opponents"] = get_fighter_opponents(response)
-
-        yield (fighter_dict)
+        yield (fighter)

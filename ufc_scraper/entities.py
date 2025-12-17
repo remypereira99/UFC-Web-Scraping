@@ -32,33 +32,34 @@ class Fight:
 
 @dataclass
 class Fighter:
+    fighter_id: str
+    url: str
     full_name: str
     first_name: str
     last_name: str
     nickname: Optional[str]
     height_ft: int
     height_in: int
-    height_cm: int
+    height_cm: float
     weight_lbs: int
     reach_in: int
     reach_cm: int
     stance: str
     dob: str
-
-
-@dataclass
-class FighterRecord:
     wins: int
     losses: int
     draws: int
     no_contests: int
+    opponents: str
 
 
 @dataclass
 class Event:
+    event_id: str
+    url: str
     name: str
     date: str
-    location: str
     city: str
     state: str
     country: str
+    fights: str

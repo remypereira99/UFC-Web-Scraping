@@ -6,6 +6,7 @@ from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
+from entities import Fighter, Event
 from constants import WEIGHT_CLASSES_LOWER
 
 
@@ -17,122 +18,92 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
-def get_fighter_names(response: Response) -> Dict[str, Union[str, int, None, float]]:
-    fighter_names_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
-    fighter_name_query: str = "span.b-content__title-highlight::text"
-    fighter_name_raw: str | None = response.css(fighter_name_query).get()
-    if fighter_name_raw is None:
+def get_fighter_info(response: Response) -> Fighter:
+    url: str = response.url
+    id: str = get_uuid_string(url)
+
+    name_query = "span.b-content__title-highlight::text"
+    nickname_query = "p.b-content__Nickname::text"
+    stats_query = "li.b-list__box-list-item::text"
+    record_query = "span.b-content__title-record::text"
+    opponents_query = "a.b-link::text"
+    opponent_urls_query = "a.b-link::attr(href)"
+
+    name_raw = response.css(name_query).get()
+    if name_raw is None:
         raise ValueError(
-            f"Fighter name missing from {response.url} with query {fighter_name_query}"
+            f"Fighter name missing from {response.url} with query {name_query}"
         )
-    fighter_name_clean: str = clean_string(fighter_name_raw)
-    fighter_names: List[str] = fighter_name_clean.split(" ")
+    name_clean: str = clean_string(name_raw)
+    names: List[str] = name_clean.split(" ")
+    full_name = " ".join(names)
+    first_name = names[0]
+    last_name = " ".join(names[1:])
 
-    fighter_names_dict["full_name"] = " ".join(fighter_names)
-    fighter_names_dict["first_name"] = fighter_names[0]
-    fighter_names_dict["last_names"] = " ".join(fighter_names[1:])
+    nickname_raw = response.css(nickname_query).get()
+    nickname = clean_string(nickname_raw) if nickname_raw else ""
 
-    fighter_nickname_query: str = "p.b-content__Nickname::text"
-    fighter_nickname_raw: str | None = response.css(fighter_nickname_query).get()
-    fighter_names_dict["nickname"] = (
-        clean_string(fighter_nickname_raw) if fighter_nickname_raw else None
-    )
+    fighter_stats = response.css(stats_query).getall()
 
-    return fighter_names_dict
-
-
-def get_fighter_personal_stats(
-    response: Response, dob_format: str = "%Y-%m-%d"
-) -> Dict[str, Union[str, int, None, float]]:
-    fighter_stats_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
-    fighter_stats = response.css("li.b-list__box-list-item::text").getall()
-
-    fighter_height_raw = fighter_stats[1]
-    fighter_height_clean = clean_string(fighter_height_raw)
-    if fighter_height_clean == "--":
-        fighter_height_ft = 0
-        fighter_height_in = 0
-        fighter_height_cm = float(0)
+    height_raw = fighter_stats[1]
+    height_clean = clean_string(height_raw)
+    if height_clean == "--":
+        height_ft = 0
+        height_in = 0
+        height_cm = float(0)
     else:
-        fighter_height_ft = int(fighter_height_clean.split("'")[0])
-        fighter_height_in = int(
-            fighter_height_clean.split("'")[1].replace('"', "").strip()
-        )
-        fighter_height_cm = float(
-            ((fighter_height_ft * 12.0) * 2.54) + (fighter_height_in * 2.54)
-        )
+        height_ft = int(height_clean.split("'")[0])
+        height_in = int(height_clean.split("'")[1].replace('"', "").strip())
+        height_cm = float(((height_ft * 12.0) * 2.54) + (height_in * 2.54))
 
-    fighter_weight_raw = fighter_stats[3]
-    fighter_weight_clean = clean_string(fighter_weight_raw).replace("lbs.", "")
-    if fighter_weight_clean == "--":
-        fighter_weight_lbs = 0
+    weight_raw = fighter_stats[3]
+    weight_clean = clean_string(weight_raw).replace("lbs.", "")
+    if weight_clean == "--":
+        weight_lbs = 0
     else:
-        fighter_weight_lbs = int(fighter_weight_clean)
+        weight_lbs = int(weight_clean)
 
-    fighter_reach_raw = fighter_stats[5]
-    fighter_reach_clean = clean_string(fighter_reach_raw).replace('"', "")
-    if fighter_reach_clean == "--":
-        fighter_reach_in = 0
-        fighter_reach_cm = 0
+    reach_raw = fighter_stats[5]
+    reach_clean = clean_string(reach_raw).replace('"', "")
+    if reach_clean == "--":
+        reach_in = 0
+        reach_cm = 0
     else:
-        fighter_reach_in = int(fighter_reach_clean)
-        fighter_reach_cm = int(float(fighter_reach_clean) * 2.54)
+        reach_in = int(reach_clean)
+        reach_cm = int(float(reach_clean) * 2.54)
 
-    fighter_stance_raw = fighter_stats[7]
-    fighter_stance_clean = clean_string(fighter_stance_raw)
+    stance_raw = fighter_stats[7]
+    stance_clean = clean_string(stance_raw)
 
-    fighter_dob_raw = fighter_stats[9]
-    fighter_dob_clean = clean_string(fighter_dob_raw)
-    if fighter_dob_clean == "--":
-        fighter_dob = ""
+    dob_raw = fighter_stats[9]
+    dob_clean = clean_string(dob_raw)
+    if dob_clean == "--":
+        dob = ""
     else:
-        fighter_dob_dt = datetime.strptime(fighter_dob_clean, "%b %d, %Y")
-        fighter_dob = datetime.strftime(fighter_dob_dt, dob_format)
+        dob_dt = datetime.strptime(dob_clean, "%b %d, %Y")
+        dob = datetime.strftime(dob_dt, "%Y-%m-%d")
 
-    fighter_stats_dict["height_ft"] = fighter_height_ft
-    fighter_stats_dict["height_in"] = fighter_height_in
-    fighter_stats_dict["height_cm"] = fighter_height_cm
-    fighter_stats_dict["weight_lbs"] = fighter_weight_lbs
-    fighter_stats_dict["reach_in"] = fighter_reach_in
-    fighter_stats_dict["reach_cm"] = fighter_reach_cm
-    fighter_stats_dict["stance"] = fighter_stance_clean
-    fighter_stats_dict["dob"] = fighter_dob
-
-    return fighter_stats_dict
-
-
-def get_fighter_record(response: Response) -> Dict[str, Union[str, int, None, float]]:
-    fighter_record_dict: defaultdict[str, Union[str, int, None, float]] = defaultdict()
-
-    fighter_record_query: str = "span.b-content__title-record::text"
-    fighter_record_raw: str | None = response.css(fighter_record_query).get()
-    if not fighter_record_raw:
+    record_raw = response.css(record_query).get()
+    if not record_raw:
         raise ValueError(
-            f"Fighter record missing from {response.url} with query {fighter_record_query}"
+            f"Fighter record missing from {response.url} with query {record_query}"
         )
-    fighter_record_clean = clean_string(fighter_record_raw)
-    fighter_record = fighter_record_clean.split(": ")[1]
-    fighter_record_dict["wins"] = int(fighter_record.split("-")[0])
-    fighter_record_dict["losses"] = int(fighter_record.split("-")[1])
+    record_clean = clean_string(record_raw)
+    record = record_clean.split(": ")[1]
+    wins = int(record.split("-")[0])
+    losses = int(record.split("-")[1])
 
     # If a fighter has > 0 no contests, the record looks like 'Record: 28-1-0 (1 NC)'
     try:
-        fighter_record_dict["draws"] = int(fighter_record.split("-")[2])
-        fighter_record_dict["no_contests"] = 0
+        draws = int(record.split("-")[2])
+        no_contests = 0
     except ValueError:
-        fighter_record_dict["draws"] = int(fighter_record.split("-")[2].split(" ")[0])
-        fighter_record_dict["no_contests"] = int(
-            fighter_record.split("-")[2].split(" ")[1].replace("(", "")
-        )
+        draws = int(record.split("-")[2].split(" ")[0])
+        no_contests = int(record.split("-")[2].split(" ")[1].replace("(", ""))
 
-    return fighter_record_dict
-
-
-def get_fighter_opponents(response: Response) -> str:
-    opponent_text_raw = response.css("a.b-link::text").getall()
+    opponent_text_raw = response.css(opponents_query).getall()
     opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-    opponent_urls = response.css("a.b-link::attr(href)").getall()
-    fighter_url = response.url
+    opponent_urls = response.css(opponent_urls_query).getall()
     opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
     text_exclusion_list = [
@@ -149,21 +120,47 @@ def get_fighter_opponents(response: Response) -> str:
     opponent_urls_filtered = [
         opponent_url
         for opponent_name, opponent_url in opponent_text_urls_list
-        if opponent_url != fighter_url
+        if opponent_url != url
         and all(term not in opponent_name.lower() for term in text_exclusion_list)
     ]
     opponent_id_list = [
         get_uuid_string(opponent_url) for opponent_url in opponent_urls_filtered
     ]
+    opponents = ", ".join(opponent_id_list)
 
-    return ", ".join(opponent_id_list)
+    fighter_info = Fighter(
+        fighter_id=id,
+        url=url,
+        full_name=full_name,
+        first_name=first_name,
+        last_name=last_name,
+        nickname=nickname,
+        height_ft=height_ft,
+        height_in=height_in,
+        height_cm=height_cm,
+        weight_lbs=weight_lbs,
+        reach_in=reach_in,
+        reach_cm=reach_cm,
+        stance=stance_clean,
+        dob=dob,
+        wins=wins,
+        losses=losses,
+        draws=draws,
+        no_contests=no_contests,
+        opponents=opponents,
+    )
+
+    return fighter_info
 
 
-def get_event_info(response: Response, dob_format: str = "%Y-%m-%d") -> Dict[str, str]:
-    event_info_dict: defaultdict[str, str] = defaultdict()
+def get_event_info(response: Response) -> Event:
+    url: str = response.url
+    event_id = get_uuid_string(url)
 
-    event_name_query: str = "span.b-content__title-highlight::text"
-    event_name_raw: str | None = response.css(event_name_query).get()
+    event_name_query = "span.b-content__title-highlight::text"
+    fight_urls_query = "a.b-flag::attr(href)"
+
+    event_name_raw = response.css(event_name_query).get()
     if not event_name_raw:
         raise ValueError(
             f"Event name missing from {response.url} with query {event_name_query}"
@@ -177,7 +174,7 @@ def get_event_info(response: Response, dob_format: str = "%Y-%m-%d") -> Dict[str
     event_date_raw: str = event_date_location[1]
     event_date_clean: str = clean_string(event_date_raw)
     event_date_dt: datetime = datetime.strptime(event_date_clean, "%B %d, %Y")
-    event_date: str = datetime.strftime(event_date_dt, dob_format)
+    event_date: str = datetime.strftime(event_date_dt, "%Y-%m-%d")
 
     event_location_raw: str = event_date_location[3]
     event_location_clean: str = clean_string(event_location_raw)
@@ -198,21 +195,28 @@ def get_event_info(response: Response, dob_format: str = "%Y-%m-%d") -> Dict[str
         event_state = ""
         event_country = ""
 
-    event_info_dict["name"] = event_name_clean
-    event_info_dict["date"] = event_date
-    event_info_dict["location"] = event_location_clean
-    event_info_dict["city"] = event_city
-    event_info_dict["state"] = event_state
-    event_info_dict["country"] = event_country
+    name = event_name_clean
+    date = event_date
+    city = event_city
+    state = event_state
+    country = event_country
 
-    return event_info_dict
+    fight_urls = response.css(fight_urls_query).getall()
+    fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
+    fights = ", ".join(fight_ids)
 
+    event_info = Event(
+        event_id=event_id,
+        url=url,
+        name=name,
+        date=date,
+        city=city,
+        state=state,
+        country=country,
+        fights=fights,
+    )
 
-def get_event_fights(response: Response) -> str:
-    fight_urls: List[str] = response.css("a.b-flag::attr(href)").getall()
-    fight_ids: List[str] = [get_uuid_string(fight_url) for fight_url in fight_urls]
-
-    return ", ".join(fight_ids)
+    return event_info
 
 
 def get_fighters(response: Response) -> Dict[str, Union[str, int]]:
