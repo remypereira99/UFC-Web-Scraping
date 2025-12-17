@@ -3,8 +3,7 @@ from typing import Dict, List, Any
 import scrapy
 from scrapy.http import Response
 
-from entities import Event
-from utils import get_uuid_string, get_event_info, get_event_fights
+from utils import get_event_info
 
 
 class CrawlEvents(scrapy.Spider):

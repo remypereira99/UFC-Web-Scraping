@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Tuple, Dict, List, Optional, Union
+from typing import Tuple, Dict, List, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
@@ -179,9 +179,9 @@ def get_event_info(response: Response) -> Event:
     event_location_raw: str = event_date_location[3]
     event_location_clean: str = clean_string(event_location_raw)
     event_location_split: List[str] = event_location_clean.split(", ")
-    event_city: Optional[str]
-    event_state: Optional[str]
-    event_country: Optional[str]
+    event_city: str
+    event_state: str
+    event_country: str
     if len(event_location_split) == 3:
         event_city = event_location_split[0]
         event_state = event_location_split[1]
@@ -191,9 +191,9 @@ def get_event_info(response: Response) -> Event:
         event_state = ""
         event_country = event_location_split[1]
     else:
-        event_city = None
-        event_state = None
-        event_country = None
+        event_city = ""
+        event_state = ""
+        event_country = ""
 
     name = event_name_clean
     date = event_date
