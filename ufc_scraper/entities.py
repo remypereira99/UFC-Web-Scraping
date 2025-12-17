@@ -21,6 +21,8 @@ class FightStats:
 class Fight:
     fight_id: str
     url: str
+    fighter_a_id: str
+    fighter_b_id: str
     weight_class: str
     num_rounds: int
     finish_method: str

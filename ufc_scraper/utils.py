@@ -215,22 +215,6 @@ def get_event_info(response: Response) -> Event:
     )
 
 
-def get_fighters(response: Response) -> Dict[str, Union[str, int]]:
-    fighter_dict: defaultdict[str, Union[str, int]] = defaultdict()
-
-    all_urls: List[str] = response.css("a.b-link::attr(href)").getall()
-    fighter_a_url: str = all_urls[1]
-    fighter_b_url: str = all_urls[2]
-
-    fighter_a_id: str = get_uuid_string(fighter_a_url)
-    fighter_b_id: str = get_uuid_string(fighter_b_url)
-
-    fighter_dict["fighter_a_id"] = fighter_a_id
-    fighter_dict["fighter_b_id"] = fighter_b_id
-
-    return fighter_dict
-
-
 def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
     judge_decision_dict: defaultdict[str, Union[str, int]] = defaultdict()
 
@@ -264,6 +248,7 @@ def get_fight_info(response: Response) -> Fight:
     url: str = response.url
     fight_id = get_uuid_string(url)
 
+    fighter_url_query = "a.b-link::attr(href)"
     bout_type_query = "i.b-fight-details__fight-title::text"
     time_format_query = ".b-fight-details__label:contains('Time format:')"
     finish_method_query = ".b-fight-details__label:contains('Method:') + i::text"
@@ -274,6 +259,12 @@ def get_fight_info(response: Response) -> Fight:
 
     all_parent_text_xpath = "./parent::*/text()"
     finish_submethod_xpath = "./ancestor::p/text()[normalize-space()]"
+
+    all_urls: List[str] = response.css(fighter_url_query).getall()
+    fighter_a_url = all_urls[1]
+    fighter_b_url = all_urls[2]
+    fighter_a_id = get_uuid_string(fighter_a_url)
+    fighter_b_id = get_uuid_string(fighter_b_url)
 
     bout_type_raw: Union[str, None] = response.css(bout_type_query).get()
     if not bout_type_raw:
@@ -337,6 +328,8 @@ def get_fight_info(response: Response) -> Fight:
     return Fight(
         fight_id=fight_id,
         url=url,
+        fighter_a_id=fighter_a_id,
+        fighter_b_id=fighter_b_id,
         weight_class=weight_class,
         num_rounds=num_rounds,
         finish_method=finish_method,
