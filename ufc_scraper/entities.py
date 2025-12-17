@@ -19,15 +19,21 @@ class FightStats:
 
 @dataclass
 class Fight:
+    fight_id: str
+    url: str
+    fighter_1_id: str
+    fighter_2_id: str
     weight_class: str
     num_rounds: int
     finish_method: str
     finish_submethod: str
     finish_round: int
-    finish_time: str
     finish_time_minute: int
     finish_time_second: int
     referee: str
+    judge_1_id: str
+    judge_2_id: str
+    judge_3_id: str
 
 
 @dataclass
