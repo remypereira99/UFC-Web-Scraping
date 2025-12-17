@@ -6,8 +6,8 @@ from scrapy.http import Response
 from utils import get_fighter_info
 
 
-class ScrapeFighters(scrapy.Spider):
-    name = "scrape_fighters"
+class CrawlFighters(scrapy.Spider):
+    name = "crawl_fighters"
 
     custom_settings = {
         "DOWNLOAD_DELAY": 1,
