@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
@@ -42,25 +42,33 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
-def safe_css_get(response: Response, query: str) -> str:
+def safe_css_get(response: Response, query: str, xpath: Optional[str] = None) -> str:
     """
-    Safely extract a single value from a response using a CSS selector.
+    Safely extract a single value from a response using a CSS selector,
+    optionally refined by an XPath expression.
 
     Applies the given CSS selector to the response and returns the first
-    matching result. If no result is found, raises a ValueError with
-    contextual information about the query and URL.
+    matching result. If an XPath expression is provided, it is applied
+    to the result of the CSS selection before extracting the value.
+    Raises a ValueError if no result is found.
 
     Args:
         response (Response): The response object to query.
         query (str): A CSS selector string.
+        xpath (Optional[str]): An optional XPath expression to apply to
+            the CSS selection.
 
     Returns:
-        str: The first extracted value matching the CSS selector.
+        str: The first extracted value matching the selector(s).
 
     Raises:
-        ValueError: If the selector returns no results.
+        ValueError: If no result is found for the given query (and XPath,
+            if provided).
     """
-    result: str | None = response.css(query).get()
+    result: str | None = (
+        response.css(query).xpath(xpath).get() if xpath else response.css(query).get()
+    )
+
     if not result:
         raise ValueError(f"No result for query {query} on {response.url}")
 
