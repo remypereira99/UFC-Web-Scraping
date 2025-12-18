@@ -88,15 +88,19 @@ class FightInfoParser:
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
-        judges_raw = (
-            self._response.css(self._judges_query)
-            .xpath(self._span_text_xpath)
-            .getall()[1:]
+        judge_and_referee_list = (
+            self._response.css(self._judges_query).xpath(self._span_text_xpath).getall()
         )
-        judges_clean = [clean_string(judge) for judge in judges_raw]
-        self._judge_1_id = get_uuid_string(judges_clean[0])
-        self._judge_2_id = get_uuid_string(judges_clean[1])
-        self._judge_3_id = get_uuid_string(judges_clean[2])
+        self._judge_1_id = ""
+        self._judge_2_id = ""
+        self._judge_3_id = ""
+
+        if len(judge_and_referee_list) > 1:
+            judge_list = judge_and_referee_list[1:]
+            judge_list_clean = [clean_string(judge) for judge in judge_list]
+            self._judge_1_id = get_uuid_string(judge_list_clean[0])
+            self._judge_2_id = get_uuid_string(judge_list_clean[1])
+            self._judge_3_id = get_uuid_string(judge_list_clean[2])
 
     def parse_fight_info(self) -> Fight:
         self._get_id()
