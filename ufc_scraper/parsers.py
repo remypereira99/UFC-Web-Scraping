@@ -66,7 +66,9 @@ class FightInfoParser:
                 self._finish_submethod_query,
                 xpath=self._finish_submethod_xpath,
             )
-            self._finish_submethod = clean_string(finish_submethod_raw)
+            self._finish_submethod = (
+                clean_string(finish_submethod_raw).lower().replace(" ", "_")
+            )
 
     def _get_finish_round(self) -> None:
         finish_round_raw = safe_css_get(
