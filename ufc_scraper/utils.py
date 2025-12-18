@@ -11,10 +11,34 @@ from constants import WEIGHT_CLASSES_LOWER
 
 
 def clean_string(raw_string: str) -> str:
+    """Normalize whitespace in a string.
+
+    Collapses consecutive whitespace characters (spaces, tabs, newlines, etc.)
+    into a single space and removes leading and trailing whitespace.
+
+    Args:
+        raw_string (str): The input string to clean.
+
+    Returns:
+        str: The cleaned string with normalized whitespace.
+
+    """
     return re.sub(r"\s+", " ", raw_string).strip()
 
 
 def get_uuid_string(input_string: str) -> str:
+    """Generate a deterministic UUID string from an input string.
+
+    Uses UUID version 5 (SHA-1 based) with the URL namespace to produce
+    a stable, deterministic UUID.
+
+    Args:
+        input_string (str): The input string used to generate the UUID.
+
+    Returns:
+        str: The generated UUID represented as a string.
+
+    """
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
