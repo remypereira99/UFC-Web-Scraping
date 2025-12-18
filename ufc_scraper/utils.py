@@ -42,6 +42,31 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
+def safe_css_get(response: Response, query: str) -> str:
+    """
+    Safely extract a single value from a response using a CSS selector.
+
+    Applies the given CSS selector to the response and returns the first
+    matching result. If no result is found, raises a ValueError with
+    contextual information about the query and URL.
+
+    Args:
+        response (Response): The response object to query.
+        query (str): A CSS selector string.
+
+    Returns:
+        str: The first extracted value matching the CSS selector.
+
+    Raises:
+        ValueError: If the selector returns no results.
+    """
+    result: str | None = response.css(query).get()
+    if not result:
+        raise ValueError(f"No result for query {query} on {response.url}")
+
+    return result
+
+
 def get_fighter_info(response: Response) -> Fighter:
     url: str = response.url
     id: str = get_uuid_string(url)
