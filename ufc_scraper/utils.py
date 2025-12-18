@@ -1,20 +1,44 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Dict, List, Union
+from typing import Dict, Generator, List, Tuple, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from entities import Event, Fight, Fighter
+from entities import Event, Fight, Fighter, FightStats
 from constants import WEIGHT_CLASSES_LOWER
 
 
 def clean_string(raw_string: str) -> str:
+    """Normalize whitespace in a string.
+
+    Collapses consecutive whitespace characters (spaces, tabs, newlines, etc.)
+    into a single space and removes leading and trailing whitespace.
+
+    Args:
+        raw_string (str): The input string to clean.
+
+    Returns:
+        str: The cleaned string with normalized whitespace.
+
+    """
     return re.sub(r"\s+", " ", raw_string).strip()
 
 
 def get_uuid_string(input_string: str) -> str:
+    """Generate a deterministic UUID string from an input string.
+
+    Uses UUID version 5 (SHA-1 based) with the URL namespace to produce
+    a stable, deterministic UUID.
+
+    Args:
+        input_string (str): The input string used to generate the UUID.
+
+    Returns:
+        str: The generated UUID represented as a string.
+
+    """
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
@@ -350,3 +374,70 @@ def get_fight_info(response: Response) -> Fight:
         judge_2_id=judge_2_id,
         judge_3_id=judge_3_id,
     )
+
+
+def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
+    fight_stat_summary_split: List[str] = clean_string(fight_stat_summary).split(" of ")
+    landed = int(fight_stat_summary_split[0])
+    attempted = int(fight_stat_summary_split[1])
+
+    return landed, attempted
+
+
+def get_fight_stats(response: Response) -> Generator[FightStats]:
+    headers_query = (
+        "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
+    )
+    rows_query = "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
+    values_query = "p.b-fight-details__table-text::text"
+
+    headers = response.css(headers_query).getall()
+    headers_clean = [clean_string(header) for header in headers[1:]]
+
+    rows = response.css(rows_query)
+    summary_stats = rows[0]
+
+    values = summary_stats.css(values_query).getall()
+    values_clean = [clean_string(value) for value in values[4:]]
+
+    fighter_a_values = values_clean[0::2]
+    fighter_b_values = values_clean[1::2]
+    fighter_a_summary_stats_dict = dict(zip(headers_clean, fighter_a_values))
+    fighter_b_summary_stats_dict = dict(zip(headers_clean, fighter_b_values))
+
+    for summary_stats_dict in (
+        fighter_a_summary_stats_dict,
+        fighter_b_summary_stats_dict,
+    ):
+        (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
+            summary_stats_dict["Total str."]
+        )
+        (significant_strikes_landed, significant_strikes_attempted) = (
+            get_fight_stats_from_summary(summary_stats_dict["Sig. str."])
+        )
+        knockdowns = int(summary_stats_dict["KD"])
+        (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
+            fighter_a_summary_stats_dict["Td"]
+        )
+        control_time_raw = clean_string(summary_stats_dict["Ctrl"])
+        (control_time_minutes_string, control_time_seconds_string) = (
+            control_time_raw.split(":")
+        )
+        control_time_minutes = int(control_time_minutes_string)
+        control_time_seconds = int(control_time_seconds_string)
+        submissions_attempted = int(summary_stats_dict["Sub. att"])
+        reversals = int(summary_stats_dict["Rev."])
+
+        yield FightStats(
+            total_strikes_landed=total_strikes_landed,
+            total_strikes_attempted=total_strikes_attempted,
+            significant_strikes_landed=significant_strikes_landed,
+            significant_strikes_attempted=significant_strikes_attempted,
+            knockdowns=knockdowns,
+            takedowns_landed=takedowns_landed,
+            takedowns_attempted=takedowns_attempted,
+            control_time_minutes=control_time_minutes,
+            control_time_seconds=control_time_seconds,
+            submissions_attempted=submissions_attempted,
+            reversals=reversals,
+        )

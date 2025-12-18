@@ -3,11 +3,11 @@ from typing import Any, AsyncGenerator, Dict, List
 import scrapy
 from scrapy.http import Response
 
-from utils import get_fight_info
+from utils import get_fight_stats
 
 
-class CrawlFights(scrapy.Spider):
-    name: str = "crawl_fights"
+class CrawlFightStats(scrapy.Spider):
+    name: str = "crawl_fight_stats"
 
     custom_settings: Dict[Any, Any] = {
         "DOWNLOAD_DELAY": 1,
@@ -27,9 +27,10 @@ class CrawlFights(scrapy.Spider):
     def _get_fight_urls(self, response: Response) -> Any:
         fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
         for link in fight_links:
-            yield scrapy.Request(link, callback=self._get_fights)
+            yield scrapy.Request(link, callback=self._get_fight_stats)
 
-    def _get_fights(self, response: Response) -> Any:
-        fight = get_fight_info(response)
+    def _get_fight_stats(self, response: Response) -> Any:
+        fighter_1_stats, fighter_2_stats = tuple(get_fight_stats(response))
 
-        yield fight
+        yield fighter_1_stats
+        yield fighter_2_stats
