@@ -1,7 +1,7 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Dict, Generator, List, Tuple, Union
+from typing import Dict, Iterator, List, Tuple, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
@@ -384,7 +384,7 @@ def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
     return landed, attempted
 
 
-def get_fight_stats(response: Response) -> Generator[FightStats]:
+def get_fight_stats(response: Response) -> Iterator[FightStats]:
     headers_query = (
         "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
     )
@@ -400,14 +400,14 @@ def get_fight_stats(response: Response) -> Generator[FightStats]:
     values = summary_stats.css(values_query).getall()
     values_clean = [clean_string(value) for value in values[4:]]
 
-    fighter_a_values = values_clean[0::2]
-    fighter_b_values = values_clean[1::2]
-    fighter_a_summary_stats_dict = dict(zip(headers_clean, fighter_a_values))
-    fighter_b_summary_stats_dict = dict(zip(headers_clean, fighter_b_values))
+    fighter_1_values = values_clean[0::2]
+    fighter_2_values = values_clean[1::2]
+    fighter_1_summary_stats_dict = dict(zip(headers_clean, fighter_1_values))
+    fighter_2_summary_stats_dict = dict(zip(headers_clean, fighter_2_values))
 
     for summary_stats_dict in (
-        fighter_a_summary_stats_dict,
-        fighter_b_summary_stats_dict,
+        fighter_1_summary_stats_dict,
+        fighter_2_summary_stats_dict,
     ):
         (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
             summary_stats_dict["Total str."]
@@ -417,7 +417,7 @@ def get_fight_stats(response: Response) -> Generator[FightStats]:
         )
         knockdowns = int(summary_stats_dict["KD"])
         (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
-            fighter_a_summary_stats_dict["Td"]
+            summary_stats_dict["Td"]
         )
         control_time_raw = clean_string(summary_stats_dict["Ctrl"])
         (control_time_minutes_string, control_time_seconds_string) = (
