@@ -3,7 +3,7 @@ from typing import Any
 import scrapy
 from scrapy.http import Response
 
-from utils import get_fighter_info
+from parsers import FighterInfoParser
 
 
 class CrawlFighters(scrapy.Spider):
@@ -28,6 +28,7 @@ class CrawlFighters(scrapy.Spider):
                 yield scrapy.Request(link, callback=self._get_fighters)
 
     def _get_fighters(self, response: Response) -> Any:
-        fighter = get_fighter_info(response)
+        fighter_info_parser = FighterInfoParser(response)
+        fighter = fighter_info_parser.parse_response()
 
         yield (fighter)
