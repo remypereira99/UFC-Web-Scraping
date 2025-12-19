@@ -6,7 +6,7 @@ from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from entities import Event, Fighter, FightStats
+from entities import Event, FightStats
 
 
 def clean_string(raw_string: str) -> str:
@@ -39,139 +39,6 @@ def get_uuid_string(input_string: str) -> str:
 
     """
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
-
-
-def get_fighter_info(response: Response) -> Fighter:
-    url: str = response.url
-    id: str = get_uuid_string(url)
-
-    name_query = "span.b-content__title-highlight::text"
-    nickname_query = "p.b-content__Nickname::text"
-    stats_query = "li.b-list__box-list-item::text"
-    record_query = "span.b-content__title-record::text"
-    opponents_query = "a.b-link::text"
-    opponent_urls_query = "a.b-link::attr(href)"
-
-    name_raw = response.css(name_query).get()
-    if name_raw is None:
-        raise ValueError(
-            f"Fighter name missing from {response.url} with query {name_query}"
-        )
-    name_clean: str = clean_string(name_raw)
-    names: List[str] = name_clean.split(" ")
-    full_name = " ".join(names)
-    first_name = names[0]
-    last_name = " ".join(names[1:])
-
-    nickname_raw = response.css(nickname_query).get()
-    nickname = clean_string(nickname_raw) if nickname_raw else ""
-
-    fighter_stats = response.css(stats_query).getall()
-
-    height_raw = fighter_stats[1]
-    height_clean = clean_string(height_raw)
-    if height_clean == "--":
-        height_ft = 0
-        height_in = 0
-        height_cm = float(0)
-    else:
-        height_ft = int(height_clean.split("'")[0])
-        height_in = int(height_clean.split("'")[1].replace('"', "").strip())
-        height_cm = float(((height_ft * 12.0) * 2.54) + (height_in * 2.54))
-
-    weight_raw = fighter_stats[3]
-    weight_clean = clean_string(weight_raw).replace("lbs.", "")
-    if weight_clean == "--":
-        weight_lbs = 0
-    else:
-        weight_lbs = int(weight_clean)
-
-    reach_raw = fighter_stats[5]
-    reach_clean = clean_string(reach_raw).replace('"', "")
-    if reach_clean == "--":
-        reach_in = 0
-        reach_cm = 0
-    else:
-        reach_in = int(reach_clean)
-        reach_cm = int(float(reach_clean) * 2.54)
-
-    stance_raw = fighter_stats[7]
-    stance_clean = clean_string(stance_raw)
-
-    dob_raw = fighter_stats[9]
-    dob_clean = clean_string(dob_raw)
-    if dob_clean == "--":
-        dob = ""
-    else:
-        dob_dt = datetime.strptime(dob_clean, "%b %d, %Y")
-        dob = datetime.strftime(dob_dt, "%Y-%m-%d")
-
-    record_raw = response.css(record_query).get()
-    if not record_raw:
-        raise ValueError(
-            f"Fighter record missing from {response.url} with query {record_query}"
-        )
-    record_clean = clean_string(record_raw)
-    record = record_clean.split(": ")[1]
-    wins = int(record.split("-")[0])
-    losses = int(record.split("-")[1])
-
-    # If a fighter has > 0 no contests, the record looks like 'Record: 28-1-0 (1 NC)'
-    try:
-        draws = int(record.split("-")[2])
-        no_contests = 0
-    except ValueError:
-        draws = int(record.split("-")[2].split(" ")[0])
-        no_contests = int(record.split("-")[2].split(" ")[1].replace("(", ""))
-
-    opponent_text_raw = response.css(opponents_query).getall()
-    opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-    opponent_urls = response.css(opponent_urls_query).getall()
-    opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
-
-    text_exclusion_list = [
-        ":",
-        "ufc",
-        "preview",
-        "dwcs",
-        "vs",
-        "strikeforce",
-        " - ",
-        "pride",
-        "dream",
-    ]
-    opponent_urls_filtered = [
-        opponent_url
-        for opponent_name, opponent_url in opponent_text_urls_list
-        if opponent_url != url
-        and all(term not in opponent_name.lower() for term in text_exclusion_list)
-    ]
-    opponent_id_list = [
-        get_uuid_string(opponent_url) for opponent_url in opponent_urls_filtered
-    ]
-    opponents = ", ".join(opponent_id_list)
-
-    return Fighter(
-        fighter_id=id,
-        url=url,
-        full_name=full_name,
-        first_name=first_name,
-        last_name=last_name,
-        nickname=nickname,
-        height_ft=height_ft,
-        height_in=height_in,
-        height_cm=height_cm,
-        weight_lbs=weight_lbs,
-        reach_in=reach_in,
-        reach_cm=reach_cm,
-        stance=stance_clean,
-        dob=dob,
-        wins=wins,
-        losses=losses,
-        draws=draws,
-        no_contests=no_contests,
-        opponents=opponents,
-    )
 
 
 def get_event_info(response: Response) -> Event:
