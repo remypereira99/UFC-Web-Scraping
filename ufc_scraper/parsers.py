@@ -1,11 +1,11 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, List, Optional
+from typing import Any, Optional
 
 from scrapy.http import Response
 
 from constants import WEIGHT_CLASSES_LOWER
-from entities import Fight, Fighter
+from entities import Event, Fight, Fighter
 from utils import clean_string, get_uuid_string
 
 
@@ -180,11 +180,12 @@ class FighterInfoParser(Parser):
         self._record_query = "span.b-content__title-record::text"
         self._opponents_query = "a.b-link::text"
         self._opponent_urls_query = "a.b-link::attr(href)"
+        self._fighter_stats = self._response.css(self._stats_query).getall()
 
     def _get_fighter_name(self) -> None:
         name_raw = self._safe_css_get(self._name_query)
         name_clean = clean_string(name_raw)
-        names: List[str] = name_clean.split(" ")
+        names = name_clean.split(" ")
         self._full_name = " ".join(names)
         self._first_name = names[0]
         self._last_names = " ".join(names[1:])
@@ -192,18 +193,8 @@ class FighterInfoParser(Parser):
         nickname_raw = self._response.css(self._nickname_query).get()
         self._nickname = clean_string(nickname_raw) if nickname_raw else ""
 
-    def _get_fighter_stats(self) -> None:
-        fighter_stats = self._response.css(self._stats_query).getall()
-
-        # Set default values
-        self._height_ft = None
-        self._height_in = None
-        self._height_cm = None
-        self._weight_lbs = None
-        self._reach_in = None
-        self._reach_cm = None
-
-        height = clean_string(fighter_stats[1])
+    def _get_fighter_height(self) -> None:
+        height = clean_string(self._fighter_stats[1])
         if height != "--":
             self._height_ft = int(height.split("'")[0])
             self._height_in = int(height.split("'")[1].replace('"', "").strip())
@@ -211,18 +202,22 @@ class FighterInfoParser(Parser):
                 ((self._height_ft * 12.0) * 2.54) + (self._height_in * 2.54)
             )
 
-        weight = clean_string(fighter_stats[3]).replace("lbs.", "")
+    def _get_fighter_weight(self) -> None:
+        weight = clean_string(self._fighter_stats[3]).replace("lbs.", "")
         if weight != "--":
             self._weight_lbs = int(weight)
 
-        reach = clean_string(fighter_stats[5]).replace('"', "")
+    def _get_fighter_reach(self) -> None:
+        reach = clean_string(self._fighter_stats[5]).replace('"', "")
         if reach != "--":
             self._reach_in = int(reach)
             self._reach_cm = int(float(reach) * 2.54)
 
-        self._stance = clean_string(fighter_stats[7])
+    def _get_fighter_stance(self) -> None:
+        self._stance = clean_string(self._fighter_stats[7])
 
-        dob_string = clean_string(fighter_stats[9])
+    def _get_fighter_dob(self) -> None:
+        dob_string = clean_string(self._fighter_stats[9])
         if dob_string != "--":
             dob_dt = datetime.strptime(dob_string, "%b %d, %Y")
             self._dob = datetime.strftime(dob_dt, "%Y-%m-%d")
@@ -275,7 +270,11 @@ class FighterInfoParser(Parser):
 
     def parse_response(self) -> Fighter:
         self._get_fighter_name()
-        self._get_fighter_stats()
+        self._get_fighter_height()
+        self._get_fighter_weight()
+        self._get_fighter_reach()
+        self._get_fighter_stance()
+        self._get_fighter_dob()
         self._get_fighter_record()
         self._get_opponents()
 
@@ -286,12 +285,12 @@ class FighterInfoParser(Parser):
             first_name=self._first_name,
             last_names=self._last_names,
             nickname=self._nickname,
-            height_ft=self._height_ft,
-            height_in=self._height_in,
-            height_cm=self._height_cm,
-            weight_lbs=self._weight_lbs,
-            reach_in=self._reach_in,
-            reach_cm=self._reach_cm,
+            height_ft=self._height_ft if self._height_ft else None,
+            height_in=self._height_in if self._height_in else None,
+            height_cm=self._height_cm if self._height_cm else None,
+            weight_lbs=self._weight_lbs if self._weight_lbs else None,
+            reach_in=self._reach_in if self._reach_in else None,
+            reach_cm=self._reach_cm if self._reach_cm else None,
             stance=self._stance,
             dob=self._dob,
             record=self._record,
@@ -300,4 +299,58 @@ class FighterInfoParser(Parser):
             draws=self._draws,
             no_contests=self._no_contests,
             opponents=self._opponents,
+        )
+
+
+class EventInfoParser(Parser):
+    def __init__(self, response: Response):
+        super().__init__(response)
+        self._event_name_query = "span.b-content__title-highlight::text"
+        self._fight_urls_query = "a.b-flag::attr(href)"
+        self._event_date_location = self._response.css(
+            "li.b-list__box-list-item::text"
+        ).getall()
+
+    def _get_event_name(self) -> None:
+        event_name_raw = self._safe_css_get(self._event_name_query)
+        self._name = clean_string(event_name_raw)
+
+    def _get_event_date(self) -> None:
+        event_date_raw = self._event_date_location[1]
+        self._event_date = clean_string(event_date_raw)
+        event_date_dt = datetime.strptime(self._event_date, "%B %d, %Y")
+        self._event_date_formatted = datetime.strftime(event_date_dt, "%Y-%m-%d")
+
+    def _get_event_location(self) -> None:
+        event_location_raw: str = self._event_date_location[3]
+        event_location_clean: str = clean_string(event_location_raw)
+        event_location_split = event_location_clean.split(", ")
+
+        self._city = ""
+        self._state = ""
+        self._country = ""
+        if len(event_location_split) == 3:
+            self._city = event_location_split[0]
+            self._state = event_location_split[1]
+            self._country = event_location_split[2]
+        elif len(event_location_split) == 2:
+            self._city = event_location_split[0]
+            self._country = event_location_split[1]
+
+    def _get_fights(self) -> None:
+        fight_urls = self._response.css(self._fight_urls_query).getall()
+        fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
+        self._fights = ", ".join(fight_ids)
+
+    def parse_response(self) -> Event:
+        return Event(
+            event_id=self._id,
+            url=self._url,
+            name=self._name,
+            date=self._event_date,
+            date_formatted=self._event_date_formatted,
+            city=self._city,
+            state=self._state,
+            country=self._country,
+            fights=self._fights,
         )
