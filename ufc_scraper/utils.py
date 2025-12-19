@@ -1,13 +1,12 @@
 from collections import defaultdict
 from datetime import datetime
 import re
-from typing import Dict, Iterator, List, Tuple, Union
+from typing import Dict, Iterator, List, Optional, Tuple, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from entities import Event, Fight, Fighter, FightStats
-from constants import WEIGHT_CLASSES_LOWER
+from entities import Event, Fighter, FightStats
 
 
 def clean_string(raw_string: str) -> str:
@@ -40,6 +39,39 @@ def get_uuid_string(input_string: str) -> str:
 
     """
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+
+
+def safe_css_get(response: Response, query: str, xpath: Optional[str] = None) -> str:
+    """
+    Safely extract a single value from a response using a CSS selector,
+    optionally refined by an XPath expression.
+
+    Applies the given CSS selector to the response and returns the first
+    matching result. If an XPath expression is provided, it is applied
+    to the result of the CSS selection before extracting the value.
+    Raises a ValueError if no result is found.
+
+    Args:
+        response (Response): The response object to query.
+        query (str): A CSS selector string.
+        xpath (Optional[str]): An optional XPath expression to apply to
+            the CSS selection.
+
+    Returns:
+        str: The first extracted value matching the selector(s).
+
+    Raises:
+        ValueError: If no result is found for the given query (and XPath,
+            if provided).
+    """
+    result: str | None = (
+        response.css(query).xpath(xpath).get() if xpath else response.css(query).get()
+    )
+
+    if not result:
+        raise ValueError(f"No result for query {query} on {response.url}")
+
+    return result
 
 
 def get_fighter_info(response: Response) -> Fighter:
@@ -266,114 +298,6 @@ def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
         judge_decision_dict[f"{judge}_fighter_2_score"] = int(score.split(" - ")[1])
 
     return judge_decision_dict
-
-
-def get_fight_info(response: Response) -> Fight:
-    url: str = response.url
-    fight_id = get_uuid_string(url)
-
-    fighter_url_query = "a.b-link::attr(href)"
-    bout_type_query = "i.b-fight-details__fight-title::text"
-    time_format_query = ".b-fight-details__label:contains('Time format:')"
-    finish_method_query = ".b-fight-details__label:contains('Method:') + i::text"
-    finish_submethod_query = ".b-fight-details__label:contains('Details:')"
-    finish_round_query = ".b-fight-details__label:contains('Round:')"
-    finish_time_query = ".b-fight-details__label:contains('Time:')"
-    referee_query = ".b-fight-details__label:contains('Referee:') + span::text"
-    judges_query = "i.b-fight-details__text-item"
-
-    all_parent_text_xpath = "./parent::*/text()"
-    finish_submethod_xpath = "./ancestor::p/text()[normalize-space()]"
-    judges_xpath = "./span/text()"
-
-    all_urls: List[str] = response.css(fighter_url_query).getall()
-    fighter_1_url = all_urls[1]
-    fighter_2_url = all_urls[2]
-    fighter_1_id = get_uuid_string(fighter_1_url)
-    fighter_2_id = get_uuid_string(fighter_2_url)
-
-    bout_type_raw: Union[str, None] = response.css(bout_type_query).get()
-    if not bout_type_raw:
-        raise ValueError(
-            f"Bout type missing from {response.url} with query {bout_type_query}"
-        )
-    bout_type_clean: str = clean_string(bout_type_raw)
-    weight_class: str = (
-        bout_type_clean.lower()
-        if bout_type_clean.lower() in WEIGHT_CLASSES_LOWER
-        else ""
-    )
-
-    time_format_raw: str = (
-        response.css(time_format_query).xpath(all_parent_text_xpath).getall()[1]
-    )
-    time_format_clean: str = clean_string(time_format_raw)
-    num_rounds = int(time_format_clean.split(" ")[0])
-
-    finish_method_raw: Union[str, None] = response.css(finish_method_query).get()
-    if not finish_method_raw:
-        raise ValueError(
-            f"Finish method missing from {response.url} with query {finish_method_query}"
-        )
-    finish_method_clean: str = clean_string(finish_method_raw)
-
-    if finish_method_clean.split(" ")[0].lower() == "decision":
-        decision: List[str] = finish_method_clean.split(" - ")
-        finish_method = decision[0].lower()
-        finish_submethod = decision[1].lower()
-    else:
-        finish_method = finish_method_clean.lower()
-        finish_submethod_raw: Union[str, None] = (
-            response.css(finish_submethod_query).xpath(finish_submethod_xpath).get()
-        )
-        if not finish_submethod_raw:
-            raise ValueError(
-                f"Finish submethod missing from {response.url} with query {finish_submethod_query}"
-            )
-        finish_submethod = clean_string(finish_submethod_raw)
-
-    finish_round_raw = (
-        response.css(finish_round_query).xpath(all_parent_text_xpath).getall()[1]
-    )
-    finish_round = int(clean_string(finish_round_raw))
-
-    finish_time_raw = (
-        response.css(finish_time_query).xpath(all_parent_text_xpath).getall()[1]
-    )
-    finish_time = clean_string(finish_time_raw)
-    finish_time_minute = int(finish_time.split(":")[0])
-    finish_time_second = int(finish_time.split(":")[1])
-
-    referee_raw = response.css(referee_query).get()
-    if not referee_raw:
-        raise ValueError(
-            f"Referee missing from {response.url} with query {referee_query}"
-        )
-    referee = clean_string(referee_raw)
-
-    judges_raw: List[str] = response.css(judges_query).xpath(judges_xpath).getall()[1:]
-    judges_clean: List[str] = [clean_string(judge) for judge in judges_raw]
-    judge_1_id = get_uuid_string(judges_clean[0])
-    judge_2_id = get_uuid_string(judges_clean[1])
-    judge_3_id = get_uuid_string(judges_clean[2])
-
-    return Fight(
-        fight_id=fight_id,
-        url=url,
-        fighter_1_id=fighter_1_id,
-        fighter_2_id=fighter_2_id,
-        weight_class=weight_class,
-        num_rounds=num_rounds,
-        finish_method=finish_method,
-        finish_submethod=finish_submethod,
-        finish_round=finish_round,
-        finish_time_minute=finish_time_minute,
-        finish_time_second=finish_time_second,
-        referee=referee,
-        judge_1_id=judge_1_id,
-        judge_2_id=judge_2_id,
-        judge_3_id=judge_3_id,
-    )
 
 
 def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
