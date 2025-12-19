@@ -1,12 +1,11 @@
 from collections import defaultdict
-from datetime import datetime
 import re
 from typing import Dict, Iterator, List, Tuple, Union
 from uuid import uuid5, NAMESPACE_URL
 
 from scrapy.http import Response
 
-from entities import Event, FightStats
+from entities import FightStats
 
 
 def clean_string(raw_string: str) -> str:
@@ -39,70 +38,6 @@ def get_uuid_string(input_string: str) -> str:
 
     """
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
-
-
-def get_event_info(response: Response) -> Event:
-    url: str = response.url
-    event_id = get_uuid_string(url)
-
-    event_name_query = "span.b-content__title-highlight::text"
-    fight_urls_query = "a.b-flag::attr(href)"
-
-    event_name_raw = response.css(event_name_query).get()
-    if not event_name_raw:
-        raise ValueError(
-            f"Event name missing from {response.url} with query {event_name_query}"
-        )
-    event_name_clean: str = clean_string(event_name_raw)
-
-    event_date_location: List[str] = response.css(
-        "li.b-list__box-list-item::text"
-    ).getall()
-
-    event_date_raw: str = event_date_location[1]
-    event_date_clean: str = clean_string(event_date_raw)
-    event_date_dt: datetime = datetime.strptime(event_date_clean, "%B %d, %Y")
-    event_date: str = datetime.strftime(event_date_dt, "%Y-%m-%d")
-
-    event_location_raw: str = event_date_location[3]
-    event_location_clean: str = clean_string(event_location_raw)
-    event_location_split: List[str] = event_location_clean.split(", ")
-    event_city: str
-    event_state: str
-    event_country: str
-    if len(event_location_split) == 3:
-        event_city = event_location_split[0]
-        event_state = event_location_split[1]
-        event_country = event_location_split[2]
-    elif len(event_location_split) == 2:
-        event_city = event_location_split[0]
-        event_state = ""
-        event_country = event_location_split[1]
-    else:
-        event_city = ""
-        event_state = ""
-        event_country = ""
-
-    name = event_name_clean
-    date = event_date
-    city = event_city
-    state = event_state
-    country = event_country
-
-    fight_urls = response.css(fight_urls_query).getall()
-    fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
-    fights = ", ".join(fight_ids)
-
-    return Event(
-        event_id=event_id,
-        url=url,
-        name=name,
-        date=date,
-        city=city,
-        state=state,
-        country=country,
-        fights=fights,
-    )
 
 
 def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
