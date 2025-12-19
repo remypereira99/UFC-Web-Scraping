@@ -40,9 +40,7 @@ class FightInfoParser:
         bout_type_raw = safe_css_get(self._response, self._bout_type_query)
         bout_type_clean = clean_string(bout_type_raw)
         self._weight_class = (
-            bout_type_clean.lower()
-            if bout_type_clean.lower() in WEIGHT_CLASSES_LOWER
-            else ""
+            bout_type_clean if bout_type_clean.lower() in WEIGHT_CLASSES_LOWER else ""
         )
 
     def _get_num_rounds(self) -> None:
@@ -57,18 +55,16 @@ class FightInfoParser:
 
         if "decision" in finish_method_clean.lower():
             decision = finish_method_clean.split(" - ")
-            self._finish_method = decision[0].lower()
-            self._finish_submethod = decision[1].lower()
+            self._finish_method = decision[0]
+            self._finish_submethod = decision[1]
         else:
-            self._finish_method = finish_method_clean.lower()
+            self._finish_method = finish_method_clean
             finish_submethod_raw = safe_css_get(
                 self._response,
                 self._finish_submethod_query,
                 xpath=self._finish_submethod_xpath,
             )
-            self._finish_submethod = (
-                clean_string(finish_submethod_raw).lower().replace(" ", "_")
-            )
+            self._finish_submethod = clean_string(finish_submethod_raw)
 
     def _get_finish_round(self) -> None:
         finish_round_raw = safe_css_get(
