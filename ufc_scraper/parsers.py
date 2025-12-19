@@ -49,9 +49,9 @@ class FightInfoParser(Parser):
     def _get_weight_class(self) -> None:
         bout_type_raw = safe_css_get(self._response, self._bout_type_query)
         bout_type_clean = clean_string(bout_type_raw)
-        self._weight_class = (
-            bout_type_clean if bout_type_clean.lower() in WEIGHT_CLASSES_LOWER else ""
-        )
+        for weight_class in WEIGHT_CLASSES_LOWER:
+            if weight_class in bout_type_clean.lower():
+                self._weight_class = weight_class
 
     def _get_num_rounds(self) -> None:
         num_rounds_raw = safe_css_get(
