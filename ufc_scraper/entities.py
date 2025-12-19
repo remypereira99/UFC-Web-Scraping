@@ -69,6 +69,7 @@ class Event:
     url: str
     name: str
     date: str
+    date_formatted: str
     city: str
     state: str
     country: str
