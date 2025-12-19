@@ -45,16 +45,17 @@ class Fighter:
     url: str
     full_name: str
     first_name: str
-    last_name: str
+    last_names: str
     nickname: Optional[str]
-    height_ft: int
-    height_in: int
-    height_cm: float
-    weight_lbs: int
-    reach_in: int
-    reach_cm: int
+    height_ft: Optional[int]
+    height_in: Optional[int]
+    height_cm: Optional[float]
+    weight_lbs: Optional[int]
+    reach_in: Optional[int]
+    reach_cm: Optional[int]
     stance: str
     dob: str
+    record: str
     wins: int
     losses: int
     draws: int
