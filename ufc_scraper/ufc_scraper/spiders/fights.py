@@ -31,6 +31,6 @@ class CrawlFights(scrapy.Spider):
 
     def _get_fights(self, response: Response) -> Any:
         fight_info_parser = FightInfoParser(response)
-        fight = fight_info_parser.parse_fight_info()
+        fight = fight_info_parser.parse_response()
 
         yield fight

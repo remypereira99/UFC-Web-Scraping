@@ -1,3 +1,6 @@
+from abc import ABC, abstractmethod
+from typing import Any
+
 from scrapy.http import Response
 
 from constants import WEIGHT_CLASSES_LOWER
@@ -5,10 +8,20 @@ from entities import Fight
 from utils import clean_string, get_uuid_string, safe_css_get
 
 
-class FightInfoParser:
+class Parser(ABC):
     def __init__(self, response: Response):
         self._response = response
-        self._url: str = response.url
+        self._url: str = self._response.url
+        self._id: str = get_uuid_string(self._url)
+
+    @abstractmethod
+    def parse_response(self) -> Any:
+        pass
+
+
+class FightInfoParser(Parser):
+    def __init__(self, response: Response):
+        super().__init__(response)
         self._fighter_url_query = "a.b-link::attr(href)"
         self._bout_type_query = "i.b-fight-details__fight-title::text"
         self._round_text_query = ".b-fight-details__label:contains('Round:')"
@@ -25,9 +38,6 @@ class FightInfoParser:
         self._next_element_xpath = "./following-sibling::text()"
         self._finish_submethod_xpath = "./ancestor::p/text()[normalize-space()]"
         self._span_text_xpath = "./span/text()"
-
-    def _get_id(self) -> None:
-        self._fight_id = get_uuid_string(self._url)
 
     def _get_fighter_ids(self) -> None:
         all_urls = self._response.css(self._fighter_url_query).getall()
@@ -100,8 +110,7 @@ class FightInfoParser:
             self._judge_2_id = get_uuid_string(judge_list_clean[1])
             self._judge_3_id = get_uuid_string(judge_list_clean[2])
 
-    def parse_fight_info(self) -> Fight:
-        self._get_id()
+    def parse_response(self) -> Fight:
         self._get_fighter_ids()
         self._get_weight_class()
         self._get_num_rounds()
@@ -111,7 +120,7 @@ class FightInfoParser:
         self._get_judges()
 
         return Fight(
-            fight_id=self._fight_id,
+            fight_id=self._id,
             url=self._url,
             fighter_1_id=self._fighter_1_id,
             fighter_2_id=self._fighter_2_id,
