@@ -3,7 +3,7 @@ from typing import Dict, List, Any
 import scrapy
 from scrapy.http import Response
 
-from utils import get_event_info
+from parsers import EventInfoParser
 
 
 class CrawlEvents(scrapy.Spider):
@@ -24,6 +24,7 @@ class CrawlEvents(scrapy.Spider):
             yield scrapy.Request(link, callback=self._get_events)
 
     def _get_events(self, response: Response) -> Any:
-        event = get_event_info(response)
+        event_info_parser = EventInfoParser(response)
+        event = event_info_parser.parse_response()
 
         yield (event)
