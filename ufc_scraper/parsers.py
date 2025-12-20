@@ -1,19 +1,20 @@
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any, Iterator, Optional
 
 from scrapy.http import Response
 
-from constants import WEIGHT_CLASSES_LOWER
-from entities import Event, Fight, Fighter
-from utils import clean_string, get_uuid_string
+from constants import WEIGHT_CLASSES_LOWER, HREF_QUERY
+from entities import Event, Fight, Fighter, FightStats
+from utils import clean_string, get_uuid_string, get_fight_stats_from_summary
 
 
 class Parser(ABC):
     def __init__(self, response: Response):
         self._response = response
-        self._url: str = self._response.url
-        self._id: str = get_uuid_string(self._url)
+        self._url = self._response.url
+        self._id = get_uuid_string(self._url)
+        self._href_query = HREF_QUERY
 
     @abstractmethod
     def parse_response(self) -> Any:
@@ -57,7 +58,6 @@ class Parser(ABC):
 class FightInfoParser(Parser):
     def __init__(self, response: Response):
         super().__init__(response)
-        self._fighter_url_query = "a.b-link::attr(href)"
         self._bout_type_query = "i.b-fight-details__fight-title::text"
         self._round_text_query = ".b-fight-details__label:contains('Round:')"
         self._finish_method_query = (
@@ -75,7 +75,7 @@ class FightInfoParser(Parser):
         self._span_text_xpath = "./span/text()"
 
     def _get_fighter_ids(self) -> None:
-        all_urls = self._response.css(self._fighter_url_query).getall()
+        all_urls = self._response.css(self._href_query).getall()
         fighter_1_url = all_urls[1]
         fighter_2_url = all_urls[2]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
@@ -179,7 +179,6 @@ class FighterInfoParser(Parser):
         self._stats_query = "li.b-list__box-list-item::text"
         self._record_query = "span.b-content__title-record::text"
         self._opponents_query = "a.b-link::text"
-        self._opponent_urls_query = "a.b-link::attr(href)"
         self._fighter_stats = self._response.css(self._stats_query).getall()
 
     def _get_fighter_name(self) -> None:
@@ -242,7 +241,7 @@ class FighterInfoParser(Parser):
     def _get_opponents(self) -> None:
         opponent_text_raw = self._response.css(self._opponents_query).getall()
         opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-        opponent_urls = self._response.css(self._opponent_urls_query).getall()
+        opponent_urls = self._response.css(self._href_query).getall()
         opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
         text_exclusion_list = [
@@ -354,3 +353,96 @@ class EventInfoParser(Parser):
             country=self._country,
             fights=self._fights,
         )
+
+
+class FightStatParser(Parser):
+    def __init__(self, response: Response):
+        super().__init__(response)
+        self._fighter_urls_query = "a.b-link.b-fight-details__person-link::attr(href)"
+        self._headers_query = (
+            "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
+        )
+        self._stat_values_query = (
+            "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
+        )
+        self._rows_query = (
+            "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
+        )
+        self._values_query = "p.b-fight-details__table-text::text"
+
+    def _get_fighter_ids(self) -> None:
+        fighter_urls = tuple(self._response.css(self._fighter_urls_query).getall())
+        fighter_1_url, fighter_2_url = fighter_urls
+        self._fighter_1_id = get_uuid_string(fighter_1_url)
+        self._fighter_2_id = get_uuid_string(fighter_2_url)
+
+    def _get_fighter_summary_stats_dicts(self) -> None:
+        headers = self._response.css(self._headers_query).getall()
+        headers_clean = [
+            clean_string(header)
+            for header in headers
+            if clean_string(header) != "Fighter"
+        ]
+
+        values = self._response.css(self._stat_values_query).getall()
+        values_clean = [
+            clean_string(value) for value in values if clean_string(value) != ""
+        ]
+
+        fighter_1_values = values_clean[0::2]
+        fighter_2_values = values_clean[1::2]
+        fighter_1_summary_stats_dict = dict(zip(headers_clean, fighter_1_values))
+        fighter_2_summary_stats_dict = dict(zip(headers_clean, fighter_2_values))
+        self._fighter_stats_dicts = {
+            self._fighter_1_id: fighter_1_summary_stats_dict,
+            self._fighter_2_id: fighter_2_summary_stats_dict,
+        }
+
+    def _get_fighter_stats(self, fighter_id: str) -> FightStats:
+        fighter_stat_dict = self._fighter_stats_dicts[fighter_id]
+
+        fight_stat_id = get_uuid_string(self._id + fighter_id)
+        (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
+            fighter_stat_dict["Total str."]
+        )
+        (significant_strikes_landed, significant_strikes_attempted) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Sig. str."])
+        )
+        knockdowns = int(fighter_stat_dict["KD"])
+        (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
+            fighter_stat_dict["Td"]
+        )
+        control_time_raw = clean_string(fighter_stat_dict["Ctrl"])
+        (control_time_minutes_string, control_time_seconds_string) = (
+            control_time_raw.split(":")
+        )
+        control_time_minutes = int(control_time_minutes_string)
+        control_time_seconds = int(control_time_seconds_string)
+        submissions_attempted = int(fighter_stat_dict["Sub. att"])
+        reversals = int(fighter_stat_dict["Rev."])
+
+        return FightStats(
+            fight_stat_id=fight_stat_id,
+            fight_id=self._id,
+            fighter_id=fighter_id,
+            total_strikes_landed=total_strikes_landed,
+            total_strikes_attempted=total_strikes_attempted,
+            significant_strikes_landed=significant_strikes_landed,
+            significant_strikes_attempted=significant_strikes_attempted,
+            knockdowns=knockdowns,
+            takedowns_landed=takedowns_landed,
+            takedowns_attempted=takedowns_attempted,
+            control_time_minutes=control_time_minutes,
+            control_time_seconds=control_time_seconds,
+            submissions_attempted=submissions_attempted,
+            reversals=reversals,
+        )
+
+    def parse_response(self) -> Iterator[FightStats]:
+        self._get_fighter_ids()
+        self._get_fighter_summary_stats_dicts()
+        fighter_1_stats = self._get_fighter_stats(self._fighter_1_id)
+        fighter_2_stats = self._get_fighter_stats(self._fighter_2_id)
+
+        yield fighter_1_stats
+        yield fighter_2_stats
