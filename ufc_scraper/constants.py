@@ -16,3 +16,5 @@ WEIGHT_CLASSES_LOWER: List[str] = [
     "catch weight",
     "open weight",
 ]
+
+HREF_QUERY: str = "a.b-link::attr(href)"
