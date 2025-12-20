@@ -3,7 +3,7 @@ from typing import Any, AsyncGenerator, Dict, List
 import scrapy
 from scrapy.http import Response
 
-from utils import get_fight_stats
+from parsers import FightStatParser
 
 
 class CrawlFightStats(scrapy.Spider):
@@ -30,7 +30,8 @@ class CrawlFightStats(scrapy.Spider):
             yield scrapy.Request(link, callback=self._get_fight_stats)
 
     def _get_fight_stats(self, response: Response) -> Any:
-        fighter_1_stats, fighter_2_stats = tuple(get_fight_stats(response))
+        fight_stat_parser = FightStatParser(response)
+        fighter_1_stats, fighter_2_stats = tuple(fight_stat_parser.parse_response())
 
         yield fighter_1_stats
         yield fighter_2_stats
