@@ -4,7 +4,12 @@ from typing import Any, Iterator, Optional
 
 from scrapy.http import Response
 
-from constants import WEIGHT_CLASSES_LOWER, HREF_QUERY
+from constants import (
+    WEIGHT_CLASSES_LOWER,
+    HREF_QUERY,
+    TOTALS_STATS_EXPECTED_HEADERS,
+    SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
+)
 from entities import Event, Fight, Fighter, FightStats
 from utils import clean_string, get_uuid_string, get_fight_stats_from_summary
 
@@ -378,11 +383,21 @@ class FightStatParser(Parser):
 
     def _get_fighter_summary_stats_dicts(self) -> None:
         headers = self._response.css(self._headers_query).getall()
-        headers_clean = [
-            clean_string(header)
-            for header in headers
-            if clean_string(header) != "Fighter"
-        ]
+        headers_clean = [clean_string(header) for header in headers]
+
+        totals_headers_clean = headers_clean[0:10]
+        totals_headers_clean.remove("Fighter")
+        assert totals_headers_clean == TOTALS_STATS_EXPECTED_HEADERS, (
+            f"Totals headers {totals_headers_clean} for url {self._url}",
+            f"do not match expected headers: {TOTALS_STATS_EXPECTED_HEADERS}",
+        )
+
+        sig_strikes_headers_clean = headers_clean[11:]
+        sig_strikes_headers_clean.remove("Fighter")
+        assert sig_strikes_headers_clean == SIGNIFICANT_STRIKES_EXPECTED_HEADERS, (
+            f"Totals headers {sig_strikes_headers_clean} for url {self._url}",
+            f"do not match expected headers: {SIGNIFICANT_STRIKES_EXPECTED_HEADERS}",
+        )
 
         values = self._response.css(self._stat_values_query).getall()
         values_clean = [

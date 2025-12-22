@@ -18,3 +18,25 @@ WEIGHT_CLASSES_LOWER: List[str] = [
 ]
 
 HREF_QUERY: str = "a.b-link::attr(href)"
+
+TOTALS_STATS_EXPECTED_HEADERS: List[str] = [
+    "KD",
+    "Sig. str.",
+    "Sig. str. %",
+    "Total str.",
+    "Td",
+    "Td %",
+    "Sub. att",
+    "Rev.",
+    "Ctrl",
+]
+SIGNIFICANT_STRIKES_EXPECTED_HEADERS: List[str] = [
+    "Sig. str",
+    "Sig. str. %",
+    "Head",
+    "Body",
+    "Leg",
+    "Distance",
+    "Clinch",
+    "Ground",
+]
