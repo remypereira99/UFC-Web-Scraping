@@ -367,6 +367,9 @@ class FightStatParser(Parser):
         self._headers_query = (
             "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
         )
+        self._round_headers_query = (
+            "thead.b-fight-details__table-row  th.b-fight-details__table-col::text"
+        )
         self._stat_values_query = (
             "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
         )
@@ -381,9 +384,16 @@ class FightStatParser(Parser):
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
-    def _get_fighter_summary_stats_dicts(self) -> None:
+    def _get_fight_stat_headers(self) -> None:
         headers = self._response.css(self._headers_query).getall()
         headers_clean = [clean_string(header) for header in headers]
+
+        round_headers = self._response.css(self._round_headers_query).getall()
+        round_headers_clean = [
+            clean_string(round_header) for round_header in round_headers
+        ]
+        # Divide by two as the number of rounds is duplicated for stats and significant strikes
+        num_rounds = int(len(round_headers_clean) / 2)
 
         totals_headers_clean = headers_clean[0:10]
         totals_headers_clean.remove("Fighter")
@@ -391,6 +401,11 @@ class FightStatParser(Parser):
             f"Totals headers {totals_headers_clean} for url {self._url}",
             f"do not match expected headers: {TOTALS_STATS_EXPECTED_HEADERS}",
         )
+        totals_by_round_headers = [
+            f"{header}_round_{round}"
+            for header in totals_headers_clean
+            for round in range(1, num_rounds + 1)
+        ]
 
         sig_strikes_headers_clean = headers_clean[11:]
         sig_strikes_headers_clean.remove("Fighter")
@@ -398,22 +413,58 @@ class FightStatParser(Parser):
             f"Totals headers {sig_strikes_headers_clean} for url {self._url}",
             f"do not match expected headers: {SIGNIFICANT_STRIKES_EXPECTED_HEADERS}",
         )
+        sig_strikes_by_round_headers = [
+            f"{header}_round_{round}"
+            for header in sig_strikes_headers_clean
+            for round in range(1, num_rounds + 1)
+        ]
 
+        self._all_stat_headers = (
+            totals_headers_clean
+            + totals_by_round_headers
+            + sig_strikes_headers_clean
+            + sig_strikes_by_round_headers
+        )
+
+    def _get_fight_stat_values(self) -> None:
         values = self._response.css(self._stat_values_query).getall()
         values_clean = [
             clean_string(value) for value in values if clean_string(value) != ""
         ]
 
-        fighter_1_values = values_clean[0::2]
-        fighter_2_values = values_clean[1::2]
-        fighter_1_summary_stats_dict = dict(zip(headers_clean, fighter_1_values))
-        fighter_2_summary_stats_dict = dict(zip(headers_clean, fighter_2_values))
+        self._fighter_1_stat_values = values_clean[0::2]
+        self._fighter_2_stat_values = values_clean[1::2]
+
+    def _get_fight_stat_dicts(self) -> None:
+        self._get_fighter_ids()
+        self._get_fight_stat_headers()
+        self._get_fight_stat_values()
+
+        num_fighter_1_values = len(self._fighter_1_stat_values)
+        num_fighter_2_values = len(self._fighter_2_stat_values)
+        num_headers = len(self._all_stat_headers)
+        assert num_fighter_1_values == num_headers, (
+            f"Number of stat values {num_fighter_1_values} does not match number of",
+            f"headers {num_headers} for fighter_1: {self._fighter_1_id}",
+        )
+        assert num_fighter_2_values == num_headers, (
+            f"Number of stat values {num_fighter_2_values} does not match number of",
+            f"headers {num_headers} for fighter_1: {self._fighter_2_id}",
+        )
+
+        fighter_1_stats_dict = dict(
+            zip(self._all_stat_headers, self._fighter_1_stat_values)
+        )
+        fighter_2_stats_dict = dict(
+            zip(self._all_stat_headers, self._fighter_2_stat_values)
+        )
         self._fighter_stats_dicts = {
-            self._fighter_1_id: fighter_1_summary_stats_dict,
-            self._fighter_2_id: fighter_2_summary_stats_dict,
+            self._fighter_1_id: fighter_1_stats_dict,
+            self._fighter_2_id: fighter_2_stats_dict,
         }
 
-    def _get_fighter_stats(self, fighter_id: str) -> FightStats:
+    def _get_fight_stats(self, fighter_id: str) -> FightStats:
+        self._get_fight_stat_dicts()
         fighter_stat_dict = self._fighter_stats_dicts[fighter_id]
 
         fight_stat_id = get_uuid_string(self._id + fighter_id)
@@ -454,10 +505,8 @@ class FightStatParser(Parser):
         )
 
     def parse_response(self) -> Iterator[FightStats]:
-        self._get_fighter_ids()
-        self._get_fighter_summary_stats_dicts()
-        fighter_1_stats = self._get_fighter_stats(self._fighter_1_id)
-        fighter_2_stats = self._get_fighter_stats(self._fighter_2_id)
+        fighter_1_stats = self._get_fight_stats(self._fighter_1_id)
+        fighter_2_stats = self._get_fight_stats(self._fighter_2_id)
 
         yield fighter_1_stats
         yield fighter_2_stats
