@@ -377,6 +377,7 @@ class FightStatParser(Parser):
             "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
         )
         self._values_query = "p.b-fight-details__table-text::text"
+        self._get_fighter_ids()
 
     def _get_fighter_ids(self) -> None:
         fighter_urls = tuple(self._response.css(self._fighter_urls_query).getall())
@@ -436,7 +437,6 @@ class FightStatParser(Parser):
         self._fighter_2_stat_values = values_clean[1::2]
 
     def _get_fight_stat_dicts(self) -> None:
-        self._get_fighter_ids()
         self._get_fight_stat_headers()
         self._get_fight_stat_values()
 
