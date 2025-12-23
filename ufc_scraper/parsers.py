@@ -408,7 +408,7 @@ class FightStatParser(Parser):
             for round in range(1, num_rounds + 1)
         ]
 
-        sig_strikes_headers_clean = headers_clean[11:]
+        sig_strikes_headers_clean = headers_clean[10:]
         sig_strikes_headers_clean.remove("Fighter")
         assert sig_strikes_headers_clean == SIGNIFICANT_STRIKES_EXPECTED_HEADERS, (
             f"Totals headers {sig_strikes_headers_clean} for url {self._url}",
@@ -474,6 +474,25 @@ class FightStatParser(Parser):
         (significant_strikes_landed, significant_strikes_attempted) = (
             get_fight_stats_from_summary(fighter_stat_dict["Sig. str."])
         )
+        (significant_strikes_landed_head, significant_strikes_attempted_head) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Head"])
+        )
+        (significant_strikes_landed_body, significant_strikes_attempted_body) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Body"])
+        )
+        (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Leg"])
+        )
+        (
+            significant_strikes_landed_distance,
+            significant_strikes_attempted_distance,
+        ) = get_fight_stats_from_summary(fighter_stat_dict["Distance"])
+        (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Clinch"])
+        )
+        (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
+            get_fight_stats_from_summary(fighter_stat_dict["Ground"])
+        )
         knockdowns = int(fighter_stat_dict["KD"])
         (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
             fighter_stat_dict["Td"]
@@ -495,6 +514,18 @@ class FightStatParser(Parser):
             total_strikes_attempted=total_strikes_attempted,
             significant_strikes_landed=significant_strikes_landed,
             significant_strikes_attempted=significant_strikes_attempted,
+            significant_strikes_landed_head=significant_strikes_landed_head,
+            significant_strikes_attempted_head=significant_strikes_attempted_head,
+            significant_strikes_landed_body=significant_strikes_landed_body,
+            significant_strikes_attempted_body=significant_strikes_attempted_body,
+            significant_strikes_landed_leg=significant_strikes_landed_leg,
+            significant_strikes_attempted_leg=significant_strikes_attempted_leg,
+            significant_strikes_landed_distance=significant_strikes_landed_distance,
+            significant_strikes_attempted_distance=significant_strikes_attempted_distance,
+            significant_strikes_landed_clinch=significant_strikes_landed_clinch,
+            significant_strikes_attempted_clinch=significant_strikes_attempted_clinch,
+            significant_strikes_landed_ground=significant_strikes_landed_ground,
+            significant_strikes_attempted_ground=significant_strikes_attempted_ground,
             knockdowns=knockdowns,
             takedowns_landed=takedowns_landed,
             takedowns_attempted=takedowns_attempted,

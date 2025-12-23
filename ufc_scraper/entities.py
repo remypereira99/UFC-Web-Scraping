@@ -11,6 +11,18 @@ class FightStats:
     total_strikes_attempted: int
     significant_strikes_landed: int
     significant_strikes_attempted: int
+    significant_strikes_landed_head: int
+    significant_strikes_attempted_head: int
+    significant_strikes_landed_body: int
+    significant_strikes_attempted_body: int
+    significant_strikes_landed_leg: int
+    significant_strikes_attempted_leg: int
+    significant_strikes_landed_distance: int
+    significant_strikes_attempted_distance: int
+    significant_strikes_landed_clinch: int
+    significant_strikes_attempted_clinch: int
+    significant_strikes_landed_ground: int
+    significant_strikes_attempted_ground: int
     knockdowns: int
     takedowns_landed: int
     takedowns_attempted: int
