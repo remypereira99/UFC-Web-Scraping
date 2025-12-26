@@ -626,6 +626,8 @@ class FightStatByRoundParser(FightStatParser):
         )
 
     def parse_response(self) -> Iterator[Any]:
+        self._get_fight_stat_dicts()
+
         for round in range(1, self._num_rounds + 1):
             fighter_1_by_round_stats = self._get_fight_stats_by_round(
                 fighter_id=self._fighter_1_id, round=round
