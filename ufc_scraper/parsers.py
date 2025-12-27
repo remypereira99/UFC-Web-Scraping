@@ -405,8 +405,8 @@ class FightStatParser(Parser):
         )
         totals_by_round_headers = [
             f"{header}_round_{round}"
-            for header in totals_headers_clean
             for round in range(1, self._num_rounds + 1)
+            for header in totals_headers_clean
         ]
 
         sig_strikes_headers_clean = headers_clean[10:]
@@ -417,8 +417,8 @@ class FightStatParser(Parser):
         )
         sig_strikes_by_round_headers = [
             f"{header}_round_{round}"
-            for header in sig_strikes_headers_clean
             for round in range(1, self._num_rounds + 1)
+            for header in sig_strikes_headers_clean
         ]
 
         self._all_stat_headers = (
@@ -551,14 +551,13 @@ class FightStatByRoundParser(FightStatParser):
     def _get_fight_stats_by_round(
         self, fighter_id: str, round: int
     ) -> FightStatsByRound:
-        self._get_fight_stat_dicts()
         fighter_stat_dict = self._fighter_stats_dicts[fighter_id]
         fight_stat_by_round_id = get_uuid_string(
             self._fight_id + fighter_id + str(round)
         )
 
         (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
-            fighter_stat_dict[f"Total str_round_{round}."]
+            fighter_stat_dict[f"Total str._round_{round}"]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
             get_fight_stats_from_summary(fighter_stat_dict[f"Sig. str._round_{round}"])
@@ -584,15 +583,15 @@ class FightStatByRoundParser(FightStatParser):
         )
         knockdowns = int(fighter_stat_dict[f"KD_round_{round}"])
         (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
-            fighter_stat_dict[f"T_round_{round}d"]
+            fighter_stat_dict[f"Td_round_{round}"]
         )
         control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round}"])
         (control_time_minutes_string, control_time_seconds_string) = (
-            control_time_raw.split(f"_round_{round}:")
+            control_time_raw.split(":")
         )
         control_time_minutes = int(control_time_minutes_string)
         control_time_seconds = int(control_time_seconds_string)
-        submissions_attempted = int(fighter_stat_dict["fSub. att_round_{round}"])
+        submissions_attempted = int(fighter_stat_dict[f"Sub. att_round_{round}"])
         reversals = int(fighter_stat_dict[f"Rev._round_{round}"])
 
         return FightStatsByRound(
