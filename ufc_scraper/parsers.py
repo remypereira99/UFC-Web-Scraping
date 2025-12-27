@@ -1,6 +1,12 @@
+"""HTML parsers for UFCStats pages.
+
+This module contains Scrapy-based parsers for UFC events, fights,
+fighters, and fight statistics (total and by-round).
+"""
+
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Iterator, Optional
+from typing import Any, Dict, Iterator, Optional
 
 from scrapy.http import Response
 
@@ -11,24 +17,21 @@ from constants import (
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
 from entities import Event, Fight, Fighter, FightStats, FightStatsByRound
-from utils import clean_string, get_uuid_string, get_fight_stats_from_summary
+from utils import clean_string, get_uuid_string, get_strikes_landed_attempted
 
 
-class Parser(ABC):
+class _Parser(ABC):
     def __init__(self, response: Response):
         self._response = response
         self._url = self._response.url
         self._id = get_uuid_string(self._url)
-        self._href_query = HREF_QUERY
 
     @abstractmethod
     def parse_response(self) -> Any:
         pass
 
     def _safe_css_get(self, query: str, xpath: Optional[str] = None) -> str:
-        """
-        Safely extract a single value from a response using a CSS selector,
-        optionally refined by an XPath expression.
+        """Safely extract a single value from a response using a CSS selector.
 
         Applies the given CSS selector to the response and returns the first
         matching result. If an XPath expression is provided, it is applied
@@ -47,6 +50,7 @@ class Parser(ABC):
         Raises:
             ValueError: If no result is found for the given query (and XPath,
                 if provided).
+
         """
         result: str | None = (
             self._response.css(query).xpath(xpath).get()
@@ -60,34 +64,57 @@ class Parser(ABC):
         return result
 
 
-class FightInfoParser(Parser):
+class FightInfoParser(_Parser):
+    """Parses HTTP responses of ufcstats.com fight pages.
+
+    Parses key attributes of UFC fights and yields Fight dataclass.
+
+    Args:
+        response (Response): The HTTP response to be parsed.
+
+    Attributes:
+        _response (Response): The raw response object.
+        _url (str): URL of the response.
+        _id (str): Deterministic UUID derived from the response URL.
+        _css_queries (Dict[str, str]): Mapping of semantic query names to
+            CSS selectors used to extract fight metadata from the response.
+        _xpath_queries (Dict[str, str]): Mapping of semantic query names to
+            XPath expressions used to refine or post-process CSS selections.
+
+    """
+
     def __init__(self, response: Response):
         super().__init__(response)
-        self._bout_type_query = "i.b-fight-details__fight-title::text"
-        self._round_text_query = ".b-fight-details__label:contains('Round:')"
-        self._finish_method_query = (
-            ".b-fight-details__label:contains('Method:') + i::text"
-        )
-        self._finish_submethod_query = ".b-fight-details__label:contains('Details:')"
-        self._finish_round_query = ".b-fight-details__label:contains('Round:')"
-        self._finish_time_query = ".b-fight-details__label:contains('Time:')"
-        self._referee_query = (
-            ".b-fight-details__label:contains('Referee:') + span::text"
-        )
-        self._judges_query = "i.b-fight-details__text-item"
-        self._next_element_xpath = "./following-sibling::text()"
-        self._finish_submethod_xpath = "./ancestor::p/text()[normalize-space()]"
-        self._span_text_xpath = "./span/text()"
+        self._css_queries: Dict[str, str] = {
+            "href_query": HREF_QUERY,
+            "bout_type_query": "i.b-fight-details__fight-title::text",
+            "round_text_query": ".b-fight-details__label:contains('Round:')",
+            "finish_method_query": (
+                ".b-fight-details__label:contains('Method:') + i::text"
+            ),
+            "finish_submethod_query": ".b-fight-details__label:contains('Details:')",
+            "finish_round_query": ".b-fight-details__label:contains('Round:')",
+            "finish_time_query": ".b-fight-details__label:contains('Time:')",
+            "referee_query": (
+                ".b-fight-details__label:contains('Referee:') + span::text"
+            ),
+            "judges_query": "i.b-fight-details__text-item",
+        }
+        self._xpath_queries: Dict[str, str] = {
+            "next_element_xpath": "./following-sibling::text()",
+            "finish_submethod_xpath": "./ancestor::p/text()[normalize-space()]",
+            "span_text_xpath": "./span/text()",
+        }
 
     def _get_fighter_ids(self) -> None:
-        all_urls = self._response.css(self._href_query).getall()
+        all_urls = self._response.css(self._css_queries["href_query"]).getall()
         fighter_1_url = all_urls[1]
         fighter_2_url = all_urls[2]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_weight_class(self) -> None:
-        bout_type_raw = self._safe_css_get(self._bout_type_query)
+        bout_type_raw = self._safe_css_get(self._css_queries["bout_type_query"])
         bout_type_clean = clean_string(bout_type_raw)
         for weight_class in WEIGHT_CLASSES_LOWER:
             if weight_class in bout_type_clean.lower():
@@ -95,12 +122,13 @@ class FightInfoParser(Parser):
 
     def _get_num_rounds(self) -> None:
         num_rounds_raw = self._safe_css_get(
-            query=self._round_text_query, xpath=self._next_element_xpath
+            query=self._css_queries["round_text_query"],
+            xpath=self._xpath_queries["next_element_xpath"],
         )
         self._num_rounds = int(clean_string(num_rounds_raw))
 
     def _get_finish_method(self) -> None:
-        finish_method_raw = self._safe_css_get(self._finish_method_query)
+        finish_method_raw = self._safe_css_get(self._css_queries["finish_method_query"])
         finish_method_clean = clean_string(finish_method_raw)
 
         if "decision" in finish_method_clean.lower():
@@ -110,18 +138,21 @@ class FightInfoParser(Parser):
         else:
             self._finish_method = finish_method_clean
             finish_submethod_raw = self._safe_css_get(
-                query=self._finish_submethod_query, xpath=self._finish_submethod_xpath
+                query=self._css_queries["finish_submethod_query"],
+                xpath=self._xpath_queries["finish_submethod_xpath"],
             )
             self._finish_submethod = clean_string(finish_submethod_raw)
 
     def _get_finish_round(self) -> None:
         finish_round_raw = self._safe_css_get(
-            query=self._finish_round_query, xpath=self._next_element_xpath
+            query=self._css_queries["finish_round_query"],
+            xpath=self._xpath_queries["next_element_xpath"],
         )
         self._finish_round = int(clean_string(finish_round_raw))
 
         finish_time_raw = self._safe_css_get(
-            query=self._finish_time_query, xpath=self._next_element_xpath
+            query=self._css_queries["finish_time_query"],
+            xpath=self._xpath_queries["next_element_xpath"],
         )
         finish_time = clean_string(finish_time_raw).split(":")
         self._finish_time_minute = int(finish_time[0])
@@ -129,13 +160,16 @@ class FightInfoParser(Parser):
 
     def _get_referee(self) -> None:
         referee_raw = self._safe_css_get(
-            query=self._finish_round_query, xpath=self._next_element_xpath
+            query=self._css_queries["finish_round_query"],
+            xpath=self._xpath_queries["next_element_xpath"],
         )
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
         judge_and_referee_list = (
-            self._response.css(self._judges_query).xpath(self._span_text_xpath).getall()
+            self._response.css(self._css_queries["judges_query"])
+            .xpath(self._xpath_queries["span_text_xpath"])
+            .getall()
         )
         self._judge_1_id = ""
         self._judge_2_id = ""
@@ -149,6 +183,15 @@ class FightInfoParser(Parser):
             self._judge_3_id = get_uuid_string(judge_list_clean[2])
 
     def parse_response(self) -> Fight:
+        """Parse the HTML response to get key fight attributes.
+
+        Args:
+            response (Response): The response object to query.
+
+        Returns:
+            Fight: Dataclass containing all key fight attributes.
+
+        """
         self._get_fighter_ids()
         self._get_weight_class()
         self._get_num_rounds()
@@ -176,25 +219,46 @@ class FightInfoParser(Parser):
         )
 
 
-class FighterInfoParser(Parser):
+class FighterInfoParser(_Parser):
+    """Parses HTTP responses of ufcstats.com fighter pages.
+
+    Parses key attributes of UFC fighters and yields Fighter dataclass.
+
+    Args:
+        response (Response): The HTTP response to be parsed.
+
+    Attributes:
+        _response (Response): The raw response object.
+        _url (str): URL of the response.
+        _id (str): Deterministic UUID derived from the response URL.
+        _css_queries (Dict[str, str]): Mapping of semantic query names to
+            CSS selectors used to extract fight metadata from the response.
+
+    """
+
     def __init__(self, response: Response):
         super().__init__(response)
-        self._name_query = "span.b-content__title-highlight::text"
-        self._nickname_query = "p.b-content__Nickname::text"
-        self._stats_query = "li.b-list__box-list-item::text"
-        self._record_query = "span.b-content__title-record::text"
-        self._opponents_query = "a.b-link::text"
-        self._fighter_stats = self._response.css(self._stats_query).getall()
+        self._css_queries: Dict[str, str] = {
+            "href_query": HREF_QUERY,
+            "name_query": "span.b-content__title-highlight::text",
+            "nickname_query": "p.b-content__Nickname::text",
+            "stats_query": "li.b-list__box-list-item::text",
+            "record_query": "span.b-content__title-record::text",
+            "opponents_query": "a.b-link::text",
+        }
+        self._fighter_stats = self._response.css(
+            self._css_queries["stats_query"]
+        ).getall()
 
     def _get_fighter_name(self) -> None:
-        name_raw = self._safe_css_get(self._name_query)
+        name_raw = self._safe_css_get(self._css_queries["name_query"])
         name_clean = clean_string(name_raw)
         names = name_clean.split(" ")
         self._full_name = " ".join(names)
         self._first_name = names[0]
         self._last_names = " ".join(names[1:])
 
-        nickname_raw = self._response.css(self._nickname_query).get()
+        nickname_raw = self._response.css(self._css_queries["nickname_query"]).get()
         self._nickname = clean_string(nickname_raw) if nickname_raw else ""
 
     def _get_fighter_height(self) -> None:
@@ -227,7 +291,7 @@ class FighterInfoParser(Parser):
             self._dob = datetime.strftime(dob_dt, "%Y-%m-%d")
 
     def _get_fighter_record(self) -> None:
-        record_raw = self._safe_css_get(self._record_query)
+        record_raw = self._safe_css_get(self._css_queries["record_query"])
         record_clean = clean_string(record_raw)
         self._record = record_clean.split(": ")[1]
         self._wins = int(self._record.split("-")[0])
@@ -244,9 +308,11 @@ class FighterInfoParser(Parser):
             )
 
     def _get_opponents(self) -> None:
-        opponent_text_raw = self._response.css(self._opponents_query).getall()
+        opponent_text_raw = self._response.css(
+            self._css_queries["opponents_query"]
+        ).getall()
         opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-        opponent_urls = self._response.css(self._href_query).getall()
+        opponent_urls = self._response.css(self._css_queries["href_query"]).getall()
         opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
         text_exclusion_list = [
@@ -273,6 +339,15 @@ class FighterInfoParser(Parser):
         self._opponents = ", ".join(opponent_id_list)
 
     def parse_response(self) -> Fighter:
+        """Parse the HTML response to get key fighter attributes.
+
+        Args:
+            response (Response): The response object to query.
+
+        Returns:
+            Fighter: Dataclass containing all key fighter attributes.
+
+        """
         self._get_fighter_name()
         self._get_fighter_height()
         self._get_fighter_weight()
@@ -306,17 +381,35 @@ class FighterInfoParser(Parser):
         )
 
 
-class EventInfoParser(Parser):
+class EventInfoParser(_Parser):
+    """Parses HTTP responses of ufcstats.com event pages.
+
+    Parses key attributes of UFC events and yields Event dataclass.
+
+    Args:
+        response (Response): The HTTP response to be parsed.
+
+    Attributes:
+        _response (Response): The raw response object.
+        _url (str): URL of the response.
+        _id (str): Deterministic UUID derived from the response URL.
+        _css_queries (Dict[str, str]): Mapping of semantic query names to
+            CSS selectors used to extract fight metadata from the response.
+
+    """
+
     def __init__(self, response: Response):
         super().__init__(response)
-        self._event_name_query = "span.b-content__title-highlight::text"
-        self._fight_urls_query = "a.b-flag::attr(href)"
+        self._css_queries: Dict[str, str] = {
+            "event_name_query": "span.b-content__title-highlight::text",
+            "fight_urls_query": "a.b-flag::attr(href)",
+        }
         self._event_date_location = self._response.css(
             "li.b-list__box-list-item::text"
         ).getall()
 
     def _get_event_name(self) -> None:
-        event_name_raw = self._safe_css_get(self._event_name_query)
+        event_name_raw = self._safe_css_get(self._css_queries["event_name_query"])
         self._name = clean_string(event_name_raw)
 
     def _get_event_date(self) -> None:
@@ -342,11 +435,20 @@ class EventInfoParser(Parser):
             self._country = event_location_split[1]
 
     def _get_fights(self) -> None:
-        fight_urls = self._response.css(self._fight_urls_query).getall()
+        fight_urls = self._response.css(self._css_queries["fight_urls_query"]).getall()
         fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
         self._fights = ", ".join(fight_ids)
 
     def parse_response(self) -> Event:
+        """Parse the HTML response to get key event attributes.
+
+        Args:
+            response (Response): The response object to query.
+
+        Returns:
+            Event: Dataclass containing all key event attributes.
+
+        """
         return Event(
             event_id=self._id,
             url=self._url,
@@ -360,37 +462,60 @@ class EventInfoParser(Parser):
         )
 
 
-class FightStatParser(Parser):
+class FightStatParser(_Parser):
+    """Parses HTTP responses of ufcstats.com fight pages.
+
+    Parses fight statistics from UFC fights and yields a FightStats dataclass
+    for each fighter.
+
+    Args:
+        response (Response): The HTTP response to be parsed.
+
+    Attributes:
+        _response (Response): The raw response object.
+        _url (str): URL of the response.
+        _id (str): Deterministic UUID derived from the response URL.
+        _css_queries (Dict[str, str]): Mapping of semantic query names to
+            CSS selectors used to extract fight metadata from the response.
+
+    """
+
     def __init__(self, response: Response):
         super().__init__(response)
+        self._css_queries: Dict[str, str] = {
+            "fighter_urls_query": "a.b-link.b-fight-details__person-link::attr(href)",
+            "headers_query": (
+                "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
+            ),
+            "round_headers_query": (
+                "thead.b-fight-details__table-row  th.b-fight-details__table-col::text"
+            ),
+            "stat_values_query": (
+                "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
+            ),
+            "rows_query": (
+                "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
+            ),
+            "values_query": "p.b-fight-details__table-text::text",
+        }
         self._fight_id = self._id
-        self._fighter_urls_query = "a.b-link.b-fight-details__person-link::attr(href)"
-        self._headers_query = (
-            "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
-        )
-        self._round_headers_query = (
-            "thead.b-fight-details__table-row  th.b-fight-details__table-col::text"
-        )
-        self._stat_values_query = (
-            "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
-        )
-        self._rows_query = (
-            "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
-        )
-        self._values_query = "p.b-fight-details__table-text::text"
         self._get_fighter_ids()
 
     def _get_fighter_ids(self) -> None:
-        fighter_urls = tuple(self._response.css(self._fighter_urls_query).getall())
+        fighter_urls = tuple(
+            self._response.css(self._css_queries["fighter_urls_query"]).getall()
+        )
         fighter_1_url, fighter_2_url = fighter_urls
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_fight_stat_headers(self) -> None:
-        headers = self._response.css(self._headers_query).getall()
+        headers = self._response.css(self._css_queries["headers_query"]).getall()
         headers_clean = [clean_string(header) for header in headers]
 
-        round_headers = self._response.css(self._round_headers_query).getall()
+        round_headers = self._response.css(
+            self._css_queries["round_headers_query"]
+        ).getall()
         round_headers_clean = [
             clean_string(round_header) for round_header in round_headers
         ]
@@ -429,7 +554,7 @@ class FightStatParser(Parser):
         )
 
     def _get_fight_stat_values(self) -> None:
-        values = self._response.css(self._stat_values_query).getall()
+        values = self._response.css(self._css_queries["stat_values_query"]).getall()
         values_clean = [
             clean_string(value) for value in values if clean_string(value) != ""
         ]
@@ -469,33 +594,33 @@ class FightStatParser(Parser):
         fighter_stat_dict = self._fighter_stats_dicts[fighter_id]
 
         fight_stat_id = get_uuid_string(self._fight_id + fighter_id)
-        (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
+        (total_strikes_landed, total_strikes_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict["Total str."]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Sig. str."])
+            get_strikes_landed_attempted(fighter_stat_dict["Sig. str."])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Head"])
+            get_strikes_landed_attempted(fighter_stat_dict["Head"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Body"])
+            get_strikes_landed_attempted(fighter_stat_dict["Body"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Leg"])
+            get_strikes_landed_attempted(fighter_stat_dict["Leg"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_fight_stats_from_summary(fighter_stat_dict["Distance"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict["Distance"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Clinch"])
+            get_strikes_landed_attempted(fighter_stat_dict["Clinch"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_fight_stats_from_summary(fighter_stat_dict["Ground"])
+            get_strikes_landed_attempted(fighter_stat_dict["Ground"])
         )
         knockdowns = int(fighter_stat_dict["KD"])
-        (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
+        (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict["Td"]
         )
         control_time_raw = clean_string(fighter_stat_dict["Ctrl"])
@@ -537,6 +662,16 @@ class FightStatParser(Parser):
         )
 
     def parse_response(self) -> Iterator[Any]:
+        """Parse the HTML response to get key fight stats.
+
+        Args:
+            response (Response): The response object to query.
+
+        Returns:
+            Iterator[FightStats]: Dataclass containing all key fight stats attributes.
+                Yields one FightStats object per fighter.
+
+        """
         fighter_1_stats = self._get_fight_stats(self._fighter_1_id)
         fighter_2_stats = self._get_fight_stats(self._fighter_2_id)
 
@@ -545,6 +680,21 @@ class FightStatParser(Parser):
 
 
 class FightStatByRoundParser(FightStatParser):
+    """Parses HTTP responses of ufcstats.com fight pages.
+
+    Parses fight statistics from each round of UFC fights and yields a FightStatsByRound
+    dataclass per fighter per round.
+
+    Args:
+        response (Response): The HTTP response to be parsed.
+
+    Attributes:
+        _response (Response): The raw response object.
+        _url (str): URL of the response.
+        _id (str): Deterministic UUID derived from the response URL.
+
+    """
+
     def __init__(self, response: Response):
         super().__init__(response)
 
@@ -556,33 +706,33 @@ class FightStatByRoundParser(FightStatParser):
             self._fight_id + fighter_id + str(round)
         )
 
-        (total_strikes_landed, total_strikes_attempted) = get_fight_stats_from_summary(
+        (total_strikes_landed, total_strikes_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict[f"Total str._round_{round}"]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Sig. str._round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Sig. str._round_{round}"])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Head_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Head_round_{round}"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Body_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Body_round_{round}"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Leg_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Leg_round_{round}"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_fight_stats_from_summary(fighter_stat_dict[f"Distance_round_{round}"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict[f"Distance_round_{round}"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Clinch_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Clinch_round_{round}"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_fight_stats_from_summary(fighter_stat_dict[f"Ground_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Ground_round_{round}"])
         )
         knockdowns = int(fighter_stat_dict[f"KD_round_{round}"])
-        (takedowns_landed, takedowns_attempted) = get_fight_stats_from_summary(
+        (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict[f"Td_round_{round}"]
         )
         control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round}"])
@@ -625,6 +775,16 @@ class FightStatByRoundParser(FightStatParser):
         )
 
     def parse_response(self) -> Iterator[Any]:
+        """Parse the HTML response to get key fight stats per round.
+
+        Args:
+            response (Response): The response object to query.
+
+        Returns:
+            Iterator[FightStatsByRound]: Dataclass containing all key fight stats attributes.
+                Yields one FightStatsByRound object per fighter per round.
+
+        """
         self._get_fight_stat_dicts()
 
         for round in range(1, self._num_rounds + 1):
