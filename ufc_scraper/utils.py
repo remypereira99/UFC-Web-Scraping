@@ -1,9 +1,8 @@
-from collections import defaultdict
-import re
-from typing import Dict, List, Tuple, Union
-from uuid import uuid5, NAMESPACE_URL
+"""Utility functions for UFC data scraping and normalization."""
 
-from scrapy.http import Response
+import re
+from typing import List, Tuple
+from uuid import uuid5, NAMESPACE_URL
 
 
 def clean_string(raw_string: str) -> str:
@@ -38,38 +37,27 @@ def get_uuid_string(input_string: str) -> str:
     return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
 
 
-def get_judges_decisions(response: Response) -> Dict[str, Union[str, int]]:
-    judge_decision_dict: defaultdict[str, Union[str, int]] = defaultdict()
+def get_strikes_landed_attempted(fight_stat: str) -> Tuple[int, int]:
+    """Get strikes landed and attempted from fight stat string.
 
-    judges_raw: List[str] = (
-        response.css("i.b-fight-details__text-item").xpath("./span/text()").getall()[1:]
-    )
-    judges_clean: List[str] = [clean_string(judge) for judge in judges_raw]
-    judge_decision_dict["judge_a"] = judges_clean[0]
-    judge_decision_dict["judge_b"] = judges_clean[1]
-    judge_decision_dict["judge_c"] = judges_clean[2]
+    Args:
+        fight_stat (str): Fight stat with the format "X of Y"
 
-    score_regex = r"\d{2} - \d{2}\."
-    scores_raw: List[str] = response.css("i.b-fight-details__text-item::text").getall()
-    scores_clean: List[str] = [
-        clean_string(score).replace(".", "")
-        for score in scores_raw
-        if re.search(score_regex, score)
-    ]
-    judge_a_score, judge_b_score, judge_c_score = scores_clean
-    judge_scores = zip(
-        ["judge_a", "judge_b", "judge_c"], [judge_a_score, judge_b_score, judge_c_score]
-    )
-    for judge, score in judge_scores:
-        judge_decision_dict[f"{judge}_fighter_1_score"] = int(score.split(" - ")[0])
-        judge_decision_dict[f"{judge}_fighter_2_score"] = int(score.split(" - ")[1])
+    Returns:
+        tuple[int, int]: A tuple of strikes (landed, attempted)
 
-    return judge_decision_dict
+    Raises:
+        ValueError: If fight_stat does not match the format "X of Y"
 
-
-def get_fight_stats_from_summary(fight_stat_summary: str) -> Tuple[int, int]:
-    fight_stat_summary_split: List[str] = clean_string(fight_stat_summary).split(" of ")
-    landed = int(fight_stat_summary_split[0])
-    attempted = int(fight_stat_summary_split[1])
+    """
+    strikes_attempted_landed_pattern = re.compile(r"^\d+\s+of\s+\d+$")
+    fight_stat_clean = clean_string(fight_stat)
+    if not strikes_attempted_landed_pattern.fullmatch(fight_stat_clean):
+        raise ValueError(
+            f"Invalid fight_stat format: {fight_stat!r}. Expected 'X of Y'."
+        )
+    fight_stat_split: List[str] = fight_stat_clean.split(" of ")
+    landed = int(fight_stat_split[0])
+    attempted = int(fight_stat_split[1])
 
     return landed, attempted
