@@ -125,7 +125,7 @@ class FightInfoParser(_Parser):
             "finish_method_query": (
                 ".b-fight-details__label:contains('Method:') + i::text"
             ),
-            "finish_submethod_query": ".b-fight-details__label:contains('Details:')",
+            "secondary_finish_method_query": ".b-fight-details__label:contains('Details:')",
             "finish_round_query": ".b-fight-details__label:contains('Round:')",
             "finish_time_query": ".b-fight-details__label:contains('Time:')",
             "referee_query": (
@@ -135,7 +135,7 @@ class FightInfoParser(_Parser):
         }
         self._xpath_queries: Dict[str, str] = {
             "next_element_xpath": "./following-sibling::text()",
-            "finish_submethod_xpath": "./ancestor::p/text()[normalize-space()]",
+            "secondary_finish_method_xpath": "./ancestor::p/text()[normalize-space()]",
             "span_text_xpath": "./span/text()",
         }
 
@@ -164,18 +164,21 @@ class FightInfoParser(_Parser):
     def _get_finish_method(self) -> None:
         finish_method_raw = self._safe_css_get(self._css_queries["finish_method_query"])
         finish_method_clean = clean_string(finish_method_raw)
+        self._finish_method = finish_method_clean
 
         if "decision" in finish_method_clean.lower():
             decision = finish_method_clean.split(" - ")
-            self._finish_method = decision[0]
-            self._finish_submethod = decision[1]
+            self._primary_finish_method = decision[0].lower()
+            self._secondary_finish_method = decision[1].lower()
         else:
-            self._finish_method = finish_method_clean
-            finish_submethod_raw = self._safe_css_get(
-                query=self._css_queries["finish_submethod_query"],
-                xpath=self._xpath_queries["finish_submethod_xpath"],
+            self._primary_finish_method = finish_method_clean.lower()
+            secondary_finish_method_raw = self._safe_css_get(
+                query=self._css_queries["secondary_finish_method_query"],
+                xpath=self._xpath_queries["secondary_finish_method_xpath"],
             )
-            self._finish_submethod = clean_string(finish_submethod_raw)
+            self._secondary_finish_method = clean_string(
+                secondary_finish_method_raw
+            ).lower()
 
     def _get_finish_round(self) -> None:
         finish_round_raw = self._safe_css_get(
@@ -193,10 +196,7 @@ class FightInfoParser(_Parser):
         self._finish_time_second = int(finish_time[1])
 
     def _get_referee(self) -> None:
-        referee_raw = self._safe_css_get(
-            query=self._css_queries["finish_round_query"],
-            xpath=self._xpath_queries["next_element_xpath"],
-        )
+        referee_raw = self._safe_css_get(self._css_queries["referee_query"])
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
@@ -211,9 +211,9 @@ class FightInfoParser(_Parser):
         if len(judge_and_referee_list) > 1:
             judge_list = judge_and_referee_list[1:]
             judge_list_clean = [clean_string(judge) for judge in judge_list]
-            self._judge_1_id = get_uuid_string(judge_list_clean[0])
-            self._judge_2_id = get_uuid_string(judge_list_clean[1])
-            self._judge_3_id = get_uuid_string(judge_list_clean[2])
+            self._judge_1 = judge_list_clean[0]
+            self._judge_2 = judge_list_clean[1]
+            self._judge_3 = judge_list_clean[2]
 
     def parse_response(self) -> Fight:
         """Parse the HTML response to get key fight attributes.
@@ -241,14 +241,15 @@ class FightInfoParser(_Parser):
             weight_class=self._weight_class,
             num_rounds=self._num_rounds,
             finish_method=self._finish_method,
-            finish_submethod=self._finish_submethod,
+            primary_finish_method=self._primary_finish_method,
+            secondary_finish_method=self._secondary_finish_method,
             finish_round=self._finish_round,
             finish_time_minute=self._finish_time_minute,
             finish_time_second=self._finish_time_second,
             referee=self._referee,
-            judge_1_id=self._judge_1_id,
-            judge_2_id=self._judge_2_id,
-            judge_3_id=self._judge_3_id,
+            judge_1=self._judge_1,
+            judge_2=self._judge_2,
+            judge_3=self._judge_3,
         )
 
 
