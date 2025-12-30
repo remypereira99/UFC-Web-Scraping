@@ -125,7 +125,7 @@ class FightInfoParser(_Parser):
             "finish_method_query": (
                 ".b-fight-details__label:contains('Method:') + i::text"
             ),
-            "finish_submethod_query": ".b-fight-details__label:contains('Details:')",
+            "secondary_finish_method_query": ".b-fight-details__label:contains('Details:')",
             "finish_round_query": ".b-fight-details__label:contains('Round:')",
             "finish_time_query": ".b-fight-details__label:contains('Time:')",
             "referee_query": (
@@ -135,7 +135,7 @@ class FightInfoParser(_Parser):
         }
         self._xpath_queries: Dict[str, str] = {
             "next_element_xpath": "./following-sibling::text()",
-            "finish_submethod_xpath": "./ancestor::p/text()[normalize-space()]",
+            "secondary_finish_method_xpath": "./ancestor::p/text()[normalize-space()]",
             "span_text_xpath": "./span/text()",
         }
 
@@ -164,18 +164,21 @@ class FightInfoParser(_Parser):
     def _get_finish_method(self) -> None:
         finish_method_raw = self._safe_css_get(self._css_queries["finish_method_query"])
         finish_method_clean = clean_string(finish_method_raw)
+        self._finish_method = finish_method_clean
 
         if "decision" in finish_method_clean.lower():
             decision = finish_method_clean.split(" - ")
-            self._finish_method = decision[0]
-            self._finish_submethod = decision[1]
+            self._primary_finish_method = decision[0].lower()
+            self._secondary_finish_method = decision[1].lower()
         else:
-            self._finish_method = finish_method_clean
-            finish_submethod_raw = self._safe_css_get(
-                query=self._css_queries["finish_submethod_query"],
-                xpath=self._xpath_queries["finish_submethod_xpath"],
+            self._primary_finish_method = finish_method_clean.lower()
+            secondary_finish_method_raw = self._safe_css_get(
+                query=self._css_queries["secondary_finish_method_query"],
+                xpath=self._xpath_queries["secondary_finish_method_xpath"],
             )
-            self._finish_submethod = clean_string(finish_submethod_raw)
+            self._secondary_finish_method = clean_string(
+                secondary_finish_method_raw
+            ).lower()
 
     def _get_finish_round(self) -> None:
         finish_round_raw = self._safe_css_get(
@@ -193,10 +196,7 @@ class FightInfoParser(_Parser):
         self._finish_time_second = int(finish_time[1])
 
     def _get_referee(self) -> None:
-        referee_raw = self._safe_css_get(
-            query=self._css_queries["finish_round_query"],
-            xpath=self._xpath_queries["next_element_xpath"],
-        )
+        referee_raw = self._safe_css_get(self._css_queries["referee_query"])
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
@@ -211,9 +211,9 @@ class FightInfoParser(_Parser):
         if len(judge_and_referee_list) > 1:
             judge_list = judge_and_referee_list[1:]
             judge_list_clean = [clean_string(judge) for judge in judge_list]
-            self._judge_1_id = get_uuid_string(judge_list_clean[0])
-            self._judge_2_id = get_uuid_string(judge_list_clean[1])
-            self._judge_3_id = get_uuid_string(judge_list_clean[2])
+            self._judge_1 = judge_list_clean[0]
+            self._judge_2 = judge_list_clean[1]
+            self._judge_3 = judge_list_clean[2]
 
     def parse_response(self) -> Fight:
         """Parse the HTML response to get key fight attributes.
@@ -241,14 +241,15 @@ class FightInfoParser(_Parser):
             weight_class=self._weight_class,
             num_rounds=self._num_rounds,
             finish_method=self._finish_method,
-            finish_submethod=self._finish_submethod,
+            primary_finish_method=self._primary_finish_method,
+            secondary_finish_method=self._secondary_finish_method,
             finish_round=self._finish_round,
             finish_time_minute=self._finish_time_minute,
             finish_time_second=self._finish_time_second,
             referee=self._referee,
-            judge_1_id=self._judge_1_id,
-            judge_2_id=self._judge_2_id,
-            judge_3_id=self._judge_3_id,
+            judge_1=self._judge_1,
+            judge_2=self._judge_2,
+            judge_3=self._judge_3,
         )
 
 
@@ -293,6 +294,9 @@ class FighterInfoParser(_Parser):
         self._nickname = clean_string(nickname_raw) if nickname_raw else ""
 
     def _get_fighter_height(self) -> None:
+        self._height_ft = None
+        self._height_in = None
+        self._height_cm = None
         height = clean_string(self._fighter_stats[1])
         if height != "--":
             self._height_ft = int(height.split("'")[0])
@@ -302,11 +306,14 @@ class FighterInfoParser(_Parser):
             )
 
     def _get_fighter_weight(self) -> None:
+        self._weight_lbs = None
         weight = clean_string(self._fighter_stats[3]).replace("lbs.", "")
         if weight != "--":
             self._weight_lbs = int(weight)
 
     def _get_fighter_reach(self) -> None:
+        self._reach_in = None
+        self._reach_cm = None
         reach = clean_string(self._fighter_stats[5]).replace('"', "")
         if reach != "--":
             self._reach_in = int(reach)
@@ -316,10 +323,13 @@ class FighterInfoParser(_Parser):
         self._stance = clean_string(self._fighter_stats[7])
 
     def _get_fighter_dob(self) -> None:
+        self._dob = None
+        self._dob_formatted = None
         dob_string = clean_string(self._fighter_stats[9])
         if dob_string != "--":
+            self._dob = dob_string
             dob_dt = datetime.strptime(dob_string, "%b %d, %Y")
-            self._dob = datetime.strftime(dob_dt, "%Y-%m-%d")
+            self._dob_formatted = datetime.strftime(dob_dt, "%Y-%m-%d")
 
     def _get_fighter_record(self) -> None:
         record_raw = self._safe_css_get(self._css_queries["record_query"])
@@ -393,14 +403,15 @@ class FighterInfoParser(_Parser):
             first_name=self._first_name,
             last_names=self._last_names,
             nickname=self._nickname,
-            height_ft=self._height_ft if self._height_ft else None,
-            height_in=self._height_in if self._height_in else None,
-            height_cm=self._height_cm if self._height_cm else None,
-            weight_lbs=self._weight_lbs if self._weight_lbs else None,
-            reach_in=self._reach_in if self._reach_in else None,
-            reach_cm=self._reach_cm if self._reach_cm else None,
+            height_ft=self._height_ft,
+            height_in=self._height_in,
+            height_cm=self._height_cm,
+            weight_lbs=self._weight_lbs,
+            reach_in=self._reach_in,
+            reach_cm=self._reach_cm,
             stance=self._stance,
             dob=self._dob,
+            dob_formatted=self._dob_formatted,
             record=self._record,
             wins=self._wins,
             losses=self._losses,
@@ -478,6 +489,11 @@ class EventInfoParser(_Parser):
             Event: Dataclass containing all key event attributes.
 
         """
+        self._get_event_name()
+        self._get_event_date()
+        self._get_event_location()
+        self._get_fights()
+
         return Event(
             event_id=self._id,
             url=self._url,
@@ -663,6 +679,7 @@ class FightStatParser(_Parser):
             fight_stat_id=fight_stat_id,
             fight_id=self._fight_id,
             fighter_id=fighter_id,
+            url=self._url,
             total_strikes_landed=total_strikes_landed,
             total_strikes_attempted=total_strikes_attempted,
             significant_strikes_landed=significant_strikes_landed,
@@ -814,13 +831,6 @@ class FightStatByRoundParser(FightStatParser):
         """
         self._get_fight_stat_dicts()
 
-        for round in range(1, self._num_rounds + 1):
-            fighter_1_by_round_stats = self._get_fight_stats_by_round(
-                fighter_id=self._fighter_1_id, round=round
-            )
-            fighter_2_by_round_stats = self._get_fight_stats_by_round(
-                fighter_id=self._fighter_2_id, round=round
-            )
-
-            yield fighter_1_by_round_stats
-            yield fighter_2_by_round_stats
+        for fighter_id in self._fighter_1_id, self._fighter_2_id:
+            for round in range(1, self._num_rounds + 1):
+                yield self._get_fight_stats_by_round(fighter_id=fighter_id, round=round)

@@ -1,12 +1,17 @@
+"""Defines dataclasses for attributes of objects parsed from HTML responses."""
+
 from dataclasses import dataclass
 from typing import Optional
 
 
 @dataclass
 class FightStats:
+    """Dataclass for UFC fight stats per fighter."""
+
     fight_stat_id: str
     fight_id: str
     fighter_id: str
+    url: str
     total_strikes_landed: int
     total_strikes_attempted: int
     significant_strikes_landed: int
@@ -34,6 +39,8 @@ class FightStats:
 
 @dataclass
 class FightStatsByRound:
+    """Dataclass for UFC fight statistics per fighter per round."""
+
     fight_stat_by_round_id: str
     fight_id: str
     fighter_id: str
@@ -65,6 +72,8 @@ class FightStatsByRound:
 
 @dataclass
 class Fight:
+    """Dataclass for general UFC fight attributes."""
+
     fight_id: str
     url: str
     fighter_1_id: str
@@ -72,18 +81,21 @@ class Fight:
     weight_class: str
     num_rounds: int
     finish_method: str
-    finish_submethod: str
+    primary_finish_method: str
+    secondary_finish_method: str
     finish_round: int
     finish_time_minute: int
     finish_time_second: int
     referee: str
-    judge_1_id: str
-    judge_2_id: str
-    judge_3_id: str
+    judge_1: str
+    judge_2: str
+    judge_3: str
 
 
 @dataclass
 class Fighter:
+    """Dataclass for general UFC fighter attributes."""
+
     fighter_id: str
     url: str
     full_name: str
@@ -97,7 +109,8 @@ class Fighter:
     reach_in: Optional[int]
     reach_cm: Optional[int]
     stance: str
-    dob: str
+    dob: Optional[str]
+    dob_formatted: Optional[str]
     record: str
     wins: int
     losses: int
@@ -108,6 +121,8 @@ class Fighter:
 
 @dataclass
 class Event:
+    """Dataclass for general UFC event attributes."""
+
     event_id: str
     url: str
     name: str
