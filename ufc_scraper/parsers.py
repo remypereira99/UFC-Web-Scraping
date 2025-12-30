@@ -6,7 +6,7 @@ fighters, and fight statistics (total and by-round).
 
 from abc import ABC, abstractmethod
 from datetime import datetime
-from typing import Any, Dict, Iterator, Optional
+from typing import Any, Dict, Iterator, List, Optional
 
 from scrapy.http import Response
 
@@ -63,6 +63,39 @@ class _Parser(ABC):
 
         return result
 
+    def _safe_css_get_all(self, query: str, xpath: Optional[str] = None) -> List[str]:
+        """Safely extract a list of values from a response using a CSS selector.
+
+        Applies the given CSS selector to the response and returns all matching
+        results. If an XPath expression is provided, it is applied to the result
+        of the CSS selection before extracting the values
+        Raises a ValueError if no results are found.
+
+        Args:
+            response (Response): The response object to query.
+            query (str): A CSS selector string.
+            xpath (Optional[str]): An optional XPath expression to apply to
+                the CSS selection.
+
+        Returns:
+            List[str]: List of all extracted values matching the selector(s).
+
+        Raises:
+            ValueError: If no result is found for the given query (and XPath,
+                if provided).
+
+        """
+        result: List[str] = (
+            self._response.css(query).xpath(xpath).getall()
+            if xpath
+            else self._response.css(query).getall()
+        )
+
+        if not result:
+            raise ValueError(f"No results for query {query} on {self._url}")
+
+        return result
+
 
 class FightInfoParser(_Parser):
     """Parses HTTP responses of ufcstats.com fight pages.
@@ -107,9 +140,10 @@ class FightInfoParser(_Parser):
         }
 
     def _get_fighter_ids(self) -> None:
-        all_urls = self._response.css(self._css_queries["href_query"]).getall()
-        fighter_1_url = all_urls[1]
-        fighter_2_url = all_urls[2]
+        all_urls = self._safe_css_get_all(self._css_queries["href_query"])
+        fighter_urls = [url for url in all_urls if "fighter-details" in url]
+        fighter_1_url = fighter_urls[0]
+        fighter_2_url = fighter_urls[1]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
@@ -166,10 +200,9 @@ class FightInfoParser(_Parser):
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
-        judge_and_referee_list = (
-            self._response.css(self._css_queries["judges_query"])
-            .xpath(self._xpath_queries["span_text_xpath"])
-            .getall()
+        judge_and_referee_list = self._safe_css_get_all(
+            query=self._css_queries["judges_query"],
+            xpath=self._xpath_queries["span_text_xpath"],
         )
         self._judge_1_id = ""
         self._judge_2_id = ""
@@ -246,9 +279,7 @@ class FighterInfoParser(_Parser):
             "record_query": "span.b-content__title-record::text",
             "opponents_query": "a.b-link::text",
         }
-        self._fighter_stats = self._response.css(
-            self._css_queries["stats_query"]
-        ).getall()
+        self._fighter_stats = self._safe_css_get_all(self._css_queries["stats_query"])
 
     def _get_fighter_name(self) -> None:
         name_raw = self._safe_css_get(self._css_queries["name_query"])
@@ -308,11 +339,9 @@ class FighterInfoParser(_Parser):
             )
 
     def _get_opponents(self) -> None:
-        opponent_text_raw = self._response.css(
-            self._css_queries["opponents_query"]
-        ).getall()
+        opponent_text_raw = self._safe_css_get_all(self._css_queries["opponents_query"])
         opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-        opponent_urls = self._response.css(self._css_queries["href_query"]).getall()
+        opponent_urls = self._safe_css_get_all(self._css_queries["href_query"])
         opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
 
         text_exclusion_list = [
@@ -404,9 +433,9 @@ class EventInfoParser(_Parser):
             "event_name_query": "span.b-content__title-highlight::text",
             "fight_urls_query": "a.b-flag::attr(href)",
         }
-        self._event_date_location = self._response.css(
+        self._event_date_location = self._safe_css_get_all(
             "li.b-list__box-list-item::text"
-        ).getall()
+        )
 
     def _get_event_name(self) -> None:
         event_name_raw = self._safe_css_get(self._css_queries["event_name_query"])
@@ -435,7 +464,7 @@ class EventInfoParser(_Parser):
             self._country = event_location_split[1]
 
     def _get_fights(self) -> None:
-        fight_urls = self._response.css(self._css_queries["fight_urls_query"]).getall()
+        fight_urls = self._safe_css_get_all(self._css_queries["fight_urls_query"])
         fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
         self._fights = ", ".join(fight_ids)
 
@@ -503,19 +532,17 @@ class FightStatParser(_Parser):
 
     def _get_fighter_ids(self) -> None:
         fighter_urls = tuple(
-            self._response.css(self._css_queries["fighter_urls_query"]).getall()
+            self._safe_css_get_all(self._css_queries["fighter_urls_query"])
         )
         fighter_1_url, fighter_2_url = fighter_urls
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_fight_stat_headers(self) -> None:
-        headers = self._response.css(self._css_queries["headers_query"]).getall()
+        headers = self._safe_css_get_all(self._css_queries["headers_query"])
         headers_clean = [clean_string(header) for header in headers]
 
-        round_headers = self._response.css(
-            self._css_queries["round_headers_query"]
-        ).getall()
+        round_headers = self._safe_css_get_all(self._css_queries["round_headers_query"])
         round_headers_clean = [
             clean_string(round_header) for round_header in round_headers
         ]
@@ -554,7 +581,7 @@ class FightStatParser(_Parser):
         )
 
     def _get_fight_stat_values(self) -> None:
-        values = self._response.css(self._css_queries["stat_values_query"]).getall()
+        values = self._safe_css_get_all(self._css_queries["stat_values_query"])
         values_clean = [
             clean_string(value) for value in values if clean_string(value) != ""
         ]
