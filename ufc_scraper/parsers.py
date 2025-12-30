@@ -294,6 +294,9 @@ class FighterInfoParser(_Parser):
         self._nickname = clean_string(nickname_raw) if nickname_raw else ""
 
     def _get_fighter_height(self) -> None:
+        self._height_ft = None
+        self._height_in = None
+        self._height_cm = None
         height = clean_string(self._fighter_stats[1])
         if height != "--":
             self._height_ft = int(height.split("'")[0])
@@ -303,11 +306,14 @@ class FighterInfoParser(_Parser):
             )
 
     def _get_fighter_weight(self) -> None:
+        self._weight_lbs = None
         weight = clean_string(self._fighter_stats[3]).replace("lbs.", "")
         if weight != "--":
             self._weight_lbs = int(weight)
 
     def _get_fighter_reach(self) -> None:
+        self._reach_in = None
+        self._reach_cm = None
         reach = clean_string(self._fighter_stats[5]).replace('"', "")
         if reach != "--":
             self._reach_in = int(reach)
@@ -394,12 +400,12 @@ class FighterInfoParser(_Parser):
             first_name=self._first_name,
             last_names=self._last_names,
             nickname=self._nickname,
-            height_ft=self._height_ft if self._height_ft else None,
-            height_in=self._height_in if self._height_in else None,
-            height_cm=self._height_cm if self._height_cm else None,
-            weight_lbs=self._weight_lbs if self._weight_lbs else None,
-            reach_in=self._reach_in if self._reach_in else None,
-            reach_cm=self._reach_cm if self._reach_cm else None,
+            height_ft=self._height_ft,
+            height_in=self._height_in,
+            height_cm=self._height_cm,
+            weight_lbs=self._weight_lbs,
+            reach_in=self._reach_in,
+            reach_cm=self._reach_cm,
             stance=self._stance,
             dob=self._dob,
             record=self._record,
