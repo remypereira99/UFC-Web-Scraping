@@ -485,6 +485,11 @@ class EventInfoParser(_Parser):
             Event: Dataclass containing all key event attributes.
 
         """
+        self._get_event_name()
+        self._get_event_date()
+        self._get_event_location()
+        self._get_fights()
+
         return Event(
             event_id=self._id,
             url=self._url,
