@@ -323,10 +323,13 @@ class FighterInfoParser(_Parser):
         self._stance = clean_string(self._fighter_stats[7])
 
     def _get_fighter_dob(self) -> None:
+        self._dob = None
+        self._dob_formatted = None
         dob_string = clean_string(self._fighter_stats[9])
         if dob_string != "--":
+            self._dob = dob_string
             dob_dt = datetime.strptime(dob_string, "%b %d, %Y")
-            self._dob = datetime.strftime(dob_dt, "%Y-%m-%d")
+            self._dob_formatted = datetime.strftime(dob_dt, "%Y-%m-%d")
 
     def _get_fighter_record(self) -> None:
         record_raw = self._safe_css_get(self._css_queries["record_query"])
@@ -408,6 +411,7 @@ class FighterInfoParser(_Parser):
             reach_cm=self._reach_cm,
             stance=self._stance,
             dob=self._dob,
+            dob_formatted=self._dob_formatted,
             record=self._record,
             wins=self._wins,
             losses=self._losses,

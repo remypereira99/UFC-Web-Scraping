@@ -108,7 +108,8 @@ class Fighter:
     reach_in: Optional[int]
     reach_cm: Optional[int]
     stance: str
-    dob: str
+    dob: Optional[str]
+    dob_formatted: Optional[str]
     record: str
     wins: int
     losses: int
