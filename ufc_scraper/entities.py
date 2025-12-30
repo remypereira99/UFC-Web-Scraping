@@ -11,6 +11,7 @@ class FightStats:
     fight_stat_id: str
     fight_id: str
     fighter_id: str
+    url: str
     total_strikes_landed: int
     total_strikes_attempted: int
     significant_strikes_landed: int

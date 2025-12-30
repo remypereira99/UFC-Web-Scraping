@@ -679,6 +679,7 @@ class FightStatParser(_Parser):
             fight_stat_id=fight_stat_id,
             fight_id=self._fight_id,
             fighter_id=fighter_id,
+            url=self._url,
             total_strikes_landed=total_strikes_landed,
             total_strikes_attempted=total_strikes_attempted,
             significant_strikes_landed=significant_strikes_landed,
