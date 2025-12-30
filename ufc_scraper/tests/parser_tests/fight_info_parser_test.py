@@ -2,7 +2,7 @@ from tests.utils import load_html_response_from_file
 
 import pytest
 
-from . import FIGHT_RESPONSE_VALID_PATH
+from tests import FIGHT_RESPONSE_VALID_PATH
 from entities import Fight
 from parsers import FightInfoParser
 
