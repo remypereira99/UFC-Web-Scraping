@@ -14,6 +14,10 @@ All spiders are configured with respectful rate limiting:
 - Randomized delay to appear more natural
 - Adjust in spider `custom_settings` if needed
 
+## Getting Started
+
+You can crawl everything with `make crawl_all`. You can also run specific spiders with `make crawl_%` - for example, if you just want to crawl fighter metrics, run `make crawl_fighters`.
+
 ## Development
 
 ### Adding a New Data Field
