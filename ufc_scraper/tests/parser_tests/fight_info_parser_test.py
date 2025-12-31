@@ -1,10 +1,10 @@
-from tests.utils import load_html_response_from_file
-
+from freezegun import freeze_time
 import pytest
 
-from tests import FIGHT_RESPONSE_VALID_PATH
 from entities import Fight
 from parsers import FightInfoParser
+from tests import FIGHT_RESPONSE_VALID_PATH
+from tests.utils import load_html_response_from_file
 
 
 @pytest.fixture
@@ -14,12 +14,14 @@ def fight_info_parser_valid() -> FightInfoParser:
     return FightInfoParser(fight_response)
 
 
+@freeze_time("2000-01-01 00:00:00", tz_offset=0)
 def test_fight_info_parse_response_valid(
     fight_info_parser_valid: FightInfoParser,
 ) -> None:
     parsed_response = fight_info_parser_valid.parse_response()
 
     expected_response = Fight(
+        scraped_at="2000-01-01 00:00:00 UTC",
         fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
         url="http://www.ufcstats.com/fight_response_valid",
         fighter_1_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",

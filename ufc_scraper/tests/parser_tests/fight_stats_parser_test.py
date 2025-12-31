@@ -1,10 +1,10 @@
-from tests.utils import load_html_response_from_file
-
+from freezegun import freeze_time
 import pytest
 
-from tests import FIGHT_RESPONSE_VALID_PATH
 from entities import FightStats
 from parsers import FightStatParser
+from tests import FIGHT_RESPONSE_VALID_PATH
+from tests.utils import load_html_response_from_file
 
 
 @pytest.fixture
@@ -14,12 +14,14 @@ def fight_stat_parser_valid() -> FightStatParser:
     return FightStatParser(fight_stat_response)
 
 
+@freeze_time("2000-01-01 00:00:00", tz_offset=0)
 def test_fight_stat_parse_response_valid(
     fight_stat_parser_valid: FightStatParser,
 ) -> None:
     parsed_response = list(fight_stat_parser_valid.parse_response())
 
     expected_response_fighter_1 = FightStats(
+        scraped_at="2000-01-01 00:00:00 UTC",
         fight_stat_id="d0e81594-355c-59a2-a7c8-5b4790107ce8",
         fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
         fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
@@ -50,6 +52,7 @@ def test_fight_stat_parse_response_valid(
     )
 
     expected_response_fighter_2 = FightStats(
+        scraped_at="2000-01-01 00:00:00 UTC",
         fight_stat_id="8a65ff90-c455-5d2f-9666-262032f8bfe4",
         fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
         fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",

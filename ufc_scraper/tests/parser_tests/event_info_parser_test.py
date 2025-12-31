@@ -1,10 +1,10 @@
-from tests.utils import load_html_response_from_file
-
+from freezegun import freeze_time
 import pytest
 
-from tests import EVENT_RESPONSE_VALID_PATH
 from entities import Event
 from parsers import EventInfoParser
+from tests import EVENT_RESPONSE_VALID_PATH
+from tests.utils import load_html_response_from_file
 
 
 @pytest.fixture
@@ -14,12 +14,14 @@ def event_info_parser_valid() -> EventInfoParser:
     return EventInfoParser(event_response)
 
 
+@freeze_time("2000-01-01 00:00:00", tz_offset=0)
 def test_event_info_parse_response_valid(
     event_info_parser_valid: EventInfoParser,
 ) -> None:
     parsed_response = event_info_parser_valid.parse_response()
 
     expected_response = Event(
+        scraped_at="2000-01-01 00:00:00 UTC",
         event_id="42935486-0863-505f-a12f-1f96955a0794",
         url="http://www.ufcstats.com/event_response_valid",
         name="UFC 308: Topuria vs. Holloway",

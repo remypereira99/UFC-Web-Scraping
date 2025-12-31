@@ -5,7 +5,7 @@ fighters, and fight statistics (total and by-round).
 """
 
 from abc import ABC, abstractmethod
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Iterator, List, Optional
 
 from scrapy.http import Response
@@ -234,6 +234,7 @@ class FightInfoParser(_Parser):
         self._get_judges()
 
         return Fight(
+            scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             fight_id=self._id,
             url=self._url,
             fighter_1_id=self._fighter_1_id,
@@ -397,6 +398,7 @@ class FighterInfoParser(_Parser):
         self._get_opponents()
 
         return Fighter(
+            scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             fighter_id=self._id,
             url=self._url,
             full_name=self._full_name,
@@ -495,6 +497,7 @@ class EventInfoParser(_Parser):
         self._get_fights()
 
         return Event(
+            scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             event_id=self._id,
             url=self._url,
             name=self._name,
@@ -676,6 +679,7 @@ class FightStatParser(_Parser):
         reversals = int(fighter_stat_dict["Rev."])
 
         return FightStats(
+            scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             fight_stat_id=fight_stat_id,
             fight_id=self._fight_id,
             fighter_id=fighter_id,
@@ -789,6 +793,7 @@ class FightStatByRoundParser(FightStatParser):
         reversals = int(fighter_stat_dict[f"Rev._round_{round}"])
 
         return FightStatsByRound(
+            scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
             fight_stat_by_round_id=fight_stat_by_round_id,
             fight_id=self._fight_id,
             fighter_id=fighter_id,
