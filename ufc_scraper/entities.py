@@ -8,6 +8,7 @@ from typing import Optional
 class FightStats:
     """Dataclass for UFC fight stats per fighter."""
 
+    scraped_at: str
     fight_stat_id: str
     fight_id: str
     fighter_id: str
@@ -41,6 +42,7 @@ class FightStats:
 class FightStatsByRound:
     """Dataclass for UFC fight statistics per fighter per round."""
 
+    scraped_at: str
     fight_stat_by_round_id: str
     fight_id: str
     fighter_id: str
@@ -74,6 +76,7 @@ class FightStatsByRound:
 class Fight:
     """Dataclass for general UFC fight attributes."""
 
+    scraped_at: str
     fight_id: str
     url: str
     fighter_1_id: str
@@ -96,6 +99,7 @@ class Fight:
 class Fighter:
     """Dataclass for general UFC fighter attributes."""
 
+    scraped_at: str
     fighter_id: str
     url: str
     full_name: str
@@ -123,6 +127,7 @@ class Fighter:
 class Event:
     """Dataclass for general UFC event attributes."""
 
+    scraped_at: str
     event_id: str
     url: str
     name: str

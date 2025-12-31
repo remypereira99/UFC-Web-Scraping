@@ -1,10 +1,10 @@
-from tests.utils import load_html_response_from_file
-
+from freezegun import freeze_time
 import pytest
 
-from tests import FIGHTER_RESPONSE_VALID_PATH
 from entities import Fighter
 from parsers import FighterInfoParser
+from tests import FIGHTER_RESPONSE_VALID_PATH
+from tests.utils import load_html_response_from_file
 
 
 @pytest.fixture
@@ -14,12 +14,14 @@ def fighter_info_parser_valid() -> FighterInfoParser:
     return FighterInfoParser(fighter_response)
 
 
+@freeze_time("2000-01-01 00:00:00", tz_offset=0)
 def test_fighter_info_parse_response_valid(
     fighter_info_parser_valid: FighterInfoParser,
 ) -> None:
     parsed_response = fighter_info_parser_valid.parse_response()
 
     expected_response = Fighter(
+        scraped_at="2000-01-01 00:00:00 UTC",
         fighter_id="f35bdc9b-f835-5992-ae94-48ea5429275a",
         url="http://www.ufcstats.com/fighter_response_valid",
         full_name="Robert Whittaker",
