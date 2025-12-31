@@ -1,19 +1,36 @@
-# UFC Web Scraping Script
+# UFC Web Scraping
 
-This sript used BeautifulSoup to scrape data from ufcstats.com. Simply run main.py, and it will scrape data from ufcstats.com into the following four tables:
+A Scrapy-based web scraping app for extracting UFC fight data from [ufcstats.com](http://ufcstats.com). This project collects detailed information about events, fights, fighters, and fight statistics with support for both aggregate and round-by-round data.
 
-- UFC Events
-- UFC Fights
-- UFC Fight Stats
-- UFC Fighters
-  
-Each table is saved as a csv file. Each time you run the script run, it will update the existing files with any new fights/fighters.  
+## Features
 
-I created this script to make my own dataset to upload to Kaggle, which you can find here: 
-- https://www.kaggle.com/datasets/remypereira/mma-dataset-2023-ufc
+- **Event Data**: Scrape UFC event details including name, date, location, and fight listings
+- **Fight Information**: Extract fight metadata such as weight class, rounds, finish methods, and officials
+- **Fighter Profiles**: Collect fighter biographies including physical stats, records, and career opponents
+- **Fight Statistics**: Fight metrics including round-by-round metrics (strikes, takedowns, control time, etc.)
 
-I also used this data for my first data analysis project, which looks at how gender affects fight stats:
-- https://www.kaggle.com/code/remypereira/battle-of-the-sexes-does-gender-affect-fights
+All spiders are configured with respectful rate limiting:
+- 1 second download delay
+- Randomized delay to appear more natural
+- Adjust in spider `custom_settings` if needed
 
-This is my first attempt at creating a web-scraping script, so any feedback is appreciated!
+## Development
 
+### Adding a New Data Field
+
+1. Update the relevant dataclass in `entities.py`
+2. Add extraction logic to the corresponding parser in `parsers.py`
+3. Update constants in `constants.py` if needed
+4. Add test coverage in `tests/parser_tests/`
+
+## License
+
+This project is open source. Please respect ufcstats.com's terms of service and use rate limiting when scraping.
+
+## Acknowledgments
+
+Data source: [UFCStats.com](http://ufcstats.com)
+
+## Contact
+
+For questions or feedback, please feel free to open an issue on GitHub or email me on remy.pereira@hotmail.co.uk
