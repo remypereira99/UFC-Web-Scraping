@@ -141,7 +141,9 @@ class FightInfoParser(_Parser):
 
     def _get_fighter_ids(self) -> None:
         all_urls = self._safe_css_get_all(self._css_queries["href_query"])
-        fighter_urls = [url for url in all_urls if "fighter-details" in url]
+        fighter_urls = [
+            url.replace("www.", "") for url in all_urls if "fighter-details" in url
+        ]
         fighter_1_url = fighter_urls[0]
         fighter_2_url = fighter_urls[1]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
