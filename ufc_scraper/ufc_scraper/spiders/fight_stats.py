@@ -9,19 +9,17 @@ from parsers import FightStatParser
 
 
 class CrawlFightStats(scrapy.Spider):
-    name: str = "crawl_fight_stats"
+    name = "crawl_fight_stats"
 
-    custom_settings: Dict[Any, Any] = {
+    custom_settings = {
         "DOWNLOAD_DELAY": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    async def start(self) -> AsyncGenerator[Any, Any]:
-        urls: List[str] = [
-            "http://www.ufcstats.com/statistics/events/completed?page=all"
-        ]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self._get_event_urls)
+    start_urls = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
+
+    def parse(self, response: Response):
+        yield from self._get_event_urls(response)
 
     def _get_event_urls(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
