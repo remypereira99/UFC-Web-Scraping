@@ -148,10 +148,12 @@ class FightInfoParser(_Parser):
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_weight_class(self) -> None:
-        bout_type_raw = self._safe_css_get(self._css_queries["bout_type_query"])
-        bout_type_clean = clean_string(bout_type_raw)
+        bout_type_text = self._safe_css_get_all(self._css_queries["bout_type_query"])
+        bout_type = [
+            clean_string(text) for text in bout_type_text if clean_string(text) != ""
+        ][0]
         for weight_class in WEIGHT_CLASSES_LOWER:
-            if weight_class in bout_type_clean.lower():
+            if weight_class in bout_type.lower():
                 self._weight_class = weight_class
 
     def _get_num_rounds(self) -> None:
