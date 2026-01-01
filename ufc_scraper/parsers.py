@@ -141,17 +141,21 @@ class FightInfoParser(_Parser):
 
     def _get_fighter_ids(self) -> None:
         all_urls = self._safe_css_get_all(self._css_queries["href_query"])
-        fighter_urls = [url for url in all_urls if "fighter-details" in url]
+        fighter_urls = [
+            url.replace("www.", "") for url in all_urls if "fighter-details" in url
+        ]
         fighter_1_url = fighter_urls[0]
         fighter_2_url = fighter_urls[1]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_weight_class(self) -> None:
-        bout_type_raw = self._safe_css_get(self._css_queries["bout_type_query"])
-        bout_type_clean = clean_string(bout_type_raw)
+        bout_type_text = self._safe_css_get_all(self._css_queries["bout_type_query"])
+        bout_type = [
+            clean_string(text) for text in bout_type_text if clean_string(text) != ""
+        ][0]
         for weight_class in WEIGHT_CLASSES_LOWER:
-            if weight_class in bout_type_clean.lower():
+            if weight_class in bout_type.lower():
                 self._weight_class = weight_class
 
     def _get_num_rounds(self) -> None:
@@ -204,9 +208,9 @@ class FightInfoParser(_Parser):
             query=self._css_queries["judges_query"],
             xpath=self._xpath_queries["span_text_xpath"],
         )
-        self._judge_1_id = ""
-        self._judge_2_id = ""
-        self._judge_3_id = ""
+        self._judge_1 = ""
+        self._judge_2 = ""
+        self._judge_3 = ""
 
         if len(judge_and_referee_list) > 1:
             judge_list = judge_and_referee_list[1:]
