@@ -21,7 +21,7 @@ class CrawlEvents(scrapy.Spider):
     def parse(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
-            yield scrapy.Request(link, callback=self._get_events)
+            yield response.follow(link, callback=self._get_events)
 
     def _get_events(self, response: Response) -> Any:
         event_info_parser = EventInfoParser(response)

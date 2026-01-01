@@ -24,12 +24,12 @@ class CrawlFights(scrapy.Spider):
     def _get_event_urls(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
-            yield scrapy.Request(link, callback=self._get_fight_urls)
+            yield response.follow(link, callback=self._get_fight_urls)
 
     def _get_fight_urls(self, response: Response) -> Any:
         fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
         for link in fight_links:
-            yield scrapy.Request(link, callback=self._get_fights)
+            yield response.follow(link, callback=self._get_fights)
 
     def _get_fights(self, response: Response) -> Any:
         fight_info_parser = FightInfoParser(response)

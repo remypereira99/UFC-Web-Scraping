@@ -25,7 +25,7 @@ class CrawlFighters(scrapy.Spider):
         for link in fighter_links:
             if link not in scraped_links:
                 scraped_links.append(link)
-                yield scrapy.Request(link, callback=self._get_fighters)
+                yield response.follow(link, callback=self._get_fighters)
 
     def _get_fighters(self, response: Response) -> Any:
         fighter_info_parser = FighterInfoParser(response)
