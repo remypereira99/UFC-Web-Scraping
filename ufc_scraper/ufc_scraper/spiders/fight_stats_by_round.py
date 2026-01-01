@@ -1,3 +1,5 @@
+"""Defines the spider to crawl all fight URLs on ufcstats.com and parse fight statistics per round per fighter."""
+
 from typing import Any, AsyncGenerator, Dict, List
 
 import scrapy
@@ -15,7 +17,9 @@ class CrawlFightStatsByRound(scrapy.Spider):
     }
 
     async def start(self) -> AsyncGenerator[Any, Any]:
-        urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=2"]
+        urls: List[str] = [
+            "http://www.ufcstats.com/statistics/events/completed?page=all"
+        ]
         for url in urls:
             yield scrapy.Request(url=url, callback=self._get_event_urls)
 
