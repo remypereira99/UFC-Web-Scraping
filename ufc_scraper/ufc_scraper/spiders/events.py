@@ -7,14 +7,14 @@ from parsers import EventInfoParser
 
 
 class CrawlEvents(scrapy.Spider):
-    name: str = "crawl_events"
+    name = "crawl_events"
 
-    custom_settings: Dict[Any, Any] = {
+    custom_settings = {
         "DOWNLOAD_DELAY": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    start_urls: List[str] = [
+    start_urls = [
         "http://www.ufcstats.com/statistics/events/completed?page=all"
     ]
 
