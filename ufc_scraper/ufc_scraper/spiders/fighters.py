@@ -23,12 +23,10 @@ class CrawlFighters(scrapy.Spider):
     ]
 
     def parse(self, response: Response) -> Any:
-        fighter_links = response.css("a.b-link::attr(href)").getall()
-        scraped_links = []
-        for link in fighter_links:
-            if link not in scraped_links:
-                scraped_links.append(link)
-                yield response.follow(link, callback=self._get_fighters)
+        yield from response.follow_all(
+            css="a.b-link::attr(href)",
+            callback=self._get_fighters,
+        )
 
     def _get_fighters(self, response: Response) -> Any:
         fighter_info_parser = FighterInfoParser(response)

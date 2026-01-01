@@ -1,4 +1,4 @@
-from typing import Dict, List, Any
+from typing import List, Any
 
 import scrapy
 from scrapy.http import Response
@@ -22,9 +22,10 @@ class CrawlEvents(scrapy.Spider):
     ]
 
     def parse(self, response: Response) -> Any:
-        event_links: List[str] = response.css("a.b-link::attr(href)").getall()
-        for link in event_links:
-            yield response.follow(link, callback=self._get_events)
+        yield from response.follow_all(
+            css="a.b-link::attr(href)",
+            callback=self._get_events,
+        )
 
     def _get_events(self, response: Response) -> Any:
         event_info_parser = EventInfoParser(response)

@@ -1,6 +1,6 @@
 """Defines the spider to crawl all fight URLs ufcstats.com and parse fight overview metrics."""
 
-from typing import Any, AsyncGenerator, Dict, List
+from typing import Any, List
 
 import scrapy
 from scrapy.http import Response
@@ -25,14 +25,16 @@ class CrawlFights(scrapy.Spider):
         yield from self._get_event_urls(response)
 
     def _get_event_urls(self, response: Response) -> Any:
-        event_links: List[str] = response.css("a.b-link::attr(href)").getall()
-        for link in event_links:
-            yield response.follow(link, callback=self._get_fight_urls)
+        yield from response.follow_all(
+            css="a.b-link::attr(href)",
+            callback=self._get_fight_urls,
+        )
 
     def _get_fight_urls(self, response: Response) -> Any:
-        fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
-        for link in fight_links:
-            yield response.follow(link, callback=self._get_fights)
+        yield from response.follow_all(
+            css="a.b-link::attr(href)",
+            callback=self._get_fights,
+        )
 
     def _get_fights(self, response: Response) -> Any:
         fight_info_parser = FightInfoParser(response)
