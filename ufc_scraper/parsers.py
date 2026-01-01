@@ -204,9 +204,9 @@ class FightInfoParser(_Parser):
             query=self._css_queries["judges_query"],
             xpath=self._xpath_queries["span_text_xpath"],
         )
-        self._judge_1_id = ""
-        self._judge_2_id = ""
-        self._judge_3_id = ""
+        self._judge_1 = ""
+        self._judge_2 = ""
+        self._judge_3 = ""
 
         if len(judge_and_referee_list) > 1:
             judge_list = judge_and_referee_list[1:]
