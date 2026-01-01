@@ -1,5 +1,3 @@
-"""Defines the spider to crawl all fight URLs ufcstats.com and parse fight overview metrics."""
-
 from typing import Any, AsyncGenerator, Dict, List
 
 import scrapy
@@ -9,30 +7,27 @@ from parsers import FightInfoParser
 
 
 class CrawlFights(scrapy.Spider):
-    name = "crawl_fights"
+    name: str = "crawl_fights"
 
-    custom_settings = {
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 1,
-        "AUTOTHROTTLE_MAX_DELAY": 10,
-        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
+    custom_settings: Dict[Any, Any] = {
+        "DOWNLOAD_DELAY": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    start_urls = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
-
-    def parse(self, response: Response):
-        yield from self._get_event_urls(response)
+    async def start(self) -> AsyncGenerator[Any, Any]:
+        urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=2"]
+        for url in urls:
+            yield scrapy.Request(url=url, callback=self._get_event_urls)
 
     def _get_event_urls(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
-            yield response.follow(link, callback=self._get_fight_urls)
+            yield scrapy.Request(link, callback=self._get_fight_urls)
 
     def _get_fight_urls(self, response: Response) -> Any:
         fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
         for link in fight_links:
-            yield response.follow(link, callback=self._get_fights)
+            yield scrapy.Request(link, callback=self._get_fights)
 
     def _get_fights(self, response: Response) -> Any:
         fight_info_parser = FightInfoParser(response)

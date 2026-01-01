@@ -10,10 +10,7 @@ class CrawlFighters(scrapy.Spider):
     name = "crawl_fighters"
 
     custom_settings = {
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 1,
-        "AUTOTHROTTLE_MAX_DELAY": 10,
-        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
+        "DOWNLOAD_DELAY": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
@@ -28,7 +25,7 @@ class CrawlFighters(scrapy.Spider):
         for link in fighter_links:
             if link not in scraped_links:
                 scraped_links.append(link)
-                yield response.follow(link, callback=self._get_fighters)
+                yield scrapy.Request(link, callback=self._get_fighters)
 
     def _get_fighters(self, response: Response) -> Any:
         fighter_info_parser = FighterInfoParser(response)

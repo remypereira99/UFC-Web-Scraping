@@ -7,24 +7,21 @@ from parsers import EventInfoParser
 
 
 class CrawlEvents(scrapy.Spider):
-    name = "crawl_events"
+    name: str = "crawl_events"
 
-    custom_settings = {
-        "AUTOTHROTTLE_ENABLED": True,
-        "AUTOTHROTTLE_START_DELAY": 1,
-        "AUTOTHROTTLE_MAX_DELAY": 10,
-        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
+    custom_settings: Dict[Any, Any] = {
+        "DOWNLOAD_DELAY": 1,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    start_urls = [
+    start_urls: List[str] = [
         "http://www.ufcstats.com/statistics/events/completed?page=all"
     ]
 
     def parse(self, response: Response) -> Any:
         event_links: List[str] = response.css("a.b-link::attr(href)").getall()
         for link in event_links:
-            yield response.follow(link, callback=self._get_events)
+            yield scrapy.Request(link, callback=self._get_events)
 
     def _get_events(self, response: Response) -> Any:
         event_info_parser = EventInfoParser(response)
