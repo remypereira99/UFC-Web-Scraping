@@ -1,4 +1,6 @@
-from typing import Any, AsyncGenerator, Dict, List
+"""Defines the spider to crawl all fight URLs on ufcstats.com and parse fight statistics per fighter."""
+
+from typing import Any
 
 import scrapy
 from scrapy.http import Response
@@ -7,27 +9,37 @@ from parsers import FightStatParser
 
 
 class CrawlFightStats(scrapy.Spider):
-    name: str = "crawl_fight_stats"
+    """Crawl all fight URLs and yield fight statistics per fighter."""
 
-    custom_settings: Dict[Any, Any] = {
-        "DOWNLOAD_DELAY": 1,
+    name = "crawl_fight_stats"
+
+    custom_settings = {
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 1,
+        "AUTOTHROTTLE_MAX_DELAY": 10,
+        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
-    async def start(self) -> AsyncGenerator[Any, Any]:
-        urls: List[str] = ["http://www.ufcstats.com/statistics/events/completed?page=2"]
-        for url in urls:
-            yield scrapy.Request(url=url, callback=self._get_event_urls)
+    start_urls = ["http://www.ufcstats.com/statistics/events/completed?page=all"]
+
+    def parse(self, response: Response) -> Any:
+        """Parse the events listing page and schedule requests to event pages."""
+        yield from self._get_event_urls(response)
 
     def _get_event_urls(self, response: Response) -> Any:
-        event_links: List[str] = response.css("a.b-link::attr(href)").getall()
-        for link in event_links:
-            yield scrapy.Request(link, callback=self._get_fight_urls)
+        """Get all event urls from main event page."""
+        yield from response.follow_all(
+            response.css("a.b-link::attr(href)").getall(),
+            callback=self._get_fight_urls,
+        )
 
     def _get_fight_urls(self, response: Response) -> Any:
-        fight_links: List[str] = response.css("a.b-flag::attr(href)").getall()
-        for link in fight_links:
-            yield scrapy.Request(link, callback=self._get_fight_stats)
+        """Get all fight urls from each event page."""
+        yield from response.follow_all(
+            response.css("a.b-link::attr(href)").getall(),
+            callback=self._get_fight_stats,
+        )
 
     def _get_fight_stats(self, response: Response) -> Any:
         fight_stat_parser = FightStatParser(response)
