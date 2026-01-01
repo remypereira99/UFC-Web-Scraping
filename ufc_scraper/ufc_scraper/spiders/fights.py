@@ -12,7 +12,10 @@ class CrawlFights(scrapy.Spider):
     name = "crawl_fights"
 
     custom_settings = {
-        "DOWNLOAD_DELAY": 1,
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 1,
+        "AUTOTHROTTLE_MAX_DELAY": 10,
+        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
     }
 
