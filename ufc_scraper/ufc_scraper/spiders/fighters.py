@@ -1,3 +1,5 @@
+"""Defines the spider to crawl all fighter URLs ufcstats.com and parse fighter overview metrics."""
+
 from typing import Any
 
 import scrapy
@@ -7,6 +9,8 @@ from parsers import FighterInfoParser
 
 
 class CrawlFighters(scrapy.Spider):
+    """Crawl all fighter URLs and yield fighter overview metrics."""
+
     name = "crawl_fighters"
 
     custom_settings = {
@@ -23,8 +27,9 @@ class CrawlFighters(scrapy.Spider):
     ]
 
     def parse(self, response: Response) -> Any:
+        """Parse the fighter listing page and schedule requests to fighter pages."""
         yield from response.follow_all(
-            css="a.b-link::attr(href)",
+            response.css("a.b-link::attr(href)").getall(),
             callback=self._get_fighters,
         )
 
