@@ -26,7 +26,7 @@ class CrawlEvents(scrapy.Spider):
     def parse(self, response: Response) -> Any:
         """Parse the events listing page and schedule requests to event pages."""
         yield from response.follow_all(
-            response.css("a.b-link::attr(href)").getall(),
+            response.css("a[href*='event-details']::attr(href)").getall(),
             callback=self._get_events,
         )
 

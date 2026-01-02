@@ -29,7 +29,7 @@ class CrawlFighters(scrapy.Spider):
     def parse(self, response: Response) -> Any:
         """Parse the fighter listing page and schedule requests to fighter pages."""
         yield from response.follow_all(
-            response.css("a.b-link::attr(href)").getall(),
+            response.css("a[href*='fighter-details']::attr(href)").getall(),
             callback=self._get_fighters,
         )
 
