@@ -293,7 +293,7 @@ class FighterInfoParser(_Parser):
             "nickname_query": "p.b-content__Nickname::text",
             "stats_query": "li.b-list__box-list-item::text",
             "record_query": "span.b-content__title-record::text",
-            "opponents_query": "a[href*='fighter-details']::attr(href)",
+            "fights_query": "a[href*='fight-details']::attr(href)",
         }
         self._fighter_stats = self._safe_css_get_all(self._css_queries["stats_query"])
 
@@ -363,11 +363,13 @@ class FighterInfoParser(_Parser):
                 self._record.split("-")[2].split(" ")[1].replace("(", "")
             )
 
-    def _get_opponents(self) -> None:
-        opponent_urls = self._safe_css_get_all(self._css_queries["opponents_query"])
-        opponent_id_list = [get_uuid_string(url) for url in opponent_urls]
+    def _get_fight_ids(self) -> None:
+        self._fight_ids = None
+        fight_urls = self._response.css(self._css_queries["fights_query"]).getall()
+        if fight_urls:
+            fight_id_list = [get_uuid_string(url) for url in fight_urls]
 
-        self._opponents = ", ".join(opponent_id_list)
+            self._fight_ids = ", ".join(fight_id_list)
 
     def parse_response(self) -> Fighter:
         """Parse the HTML response to get key fighter attributes.
@@ -386,7 +388,7 @@ class FighterInfoParser(_Parser):
         self._get_fighter_stance()
         self._get_fighter_dob()
         self._get_fighter_record()
-        self._get_opponents()
+        self._get_fight_ids()
 
         return Fighter(
             scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -410,7 +412,7 @@ class FighterInfoParser(_Parser):
             losses=self._losses,
             draws=self._draws,
             no_contests=self._no_contests,
-            opponents=self._opponents,
+            fight_ids=self._fight_ids,
         )
 
 
