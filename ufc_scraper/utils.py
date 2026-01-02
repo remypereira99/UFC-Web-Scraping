@@ -21,7 +21,25 @@ def clean_string(raw_string: str) -> str:
     return re.sub(r"\s+", " ", raw_string).strip()
 
 
-def get_uuid_string(input_string: str) -> str:
+def format_href(url: str) -> str:
+    """Remove the 'www.' subdomain from a URL string.
+
+    Uses a regular expression to strip 'www.' when it appears
+    immediately after the URL scheme (e.g., http:// or https://).
+    This is because the URLs in the hrefs have www. but the URLs
+    on each page don't, so this helps ensure the IDs are consistent.
+
+    Args:
+        url (str): The URL from which the 'www.' subdomain should be removed.
+
+    Returns:
+        str: The normalized URL without the 'www.' subdomain.
+
+    """
+    return re.sub(r"(?<=://)www\.", "", url)
+
+
+def get_uuid_string(input_string: str, should_format_href: bool = True) -> str:
     """Generate a deterministic UUID string from an input string.
 
     Uses UUID version 5 (SHA-1 based) with the URL namespace to produce
@@ -29,12 +47,19 @@ def get_uuid_string(input_string: str) -> str:
 
     Args:
         input_string (str): The input string used to generate the UUID.
+        should_format_href(bool): Whether or not to format url used in UUID
 
     Returns:
         str: The generated UUID represented as a string.
 
     """
-    return str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+    if should_format_href:
+        uuid_string = str(
+            uuid5(namespace=NAMESPACE_URL, name=format_href(input_string))
+        )
+    else:
+        uuid_string = str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+    return uuid_string
 
 
 def get_strikes_landed_attempted(fight_stat: str) -> Tuple[int, int]:

@@ -5,6 +5,7 @@ from entities import Fighter
 from parsers import FighterInfoParser
 from tests import FIGHTER_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
+from utils import get_uuid_string
 
 
 @pytest.fixture
@@ -20,9 +21,63 @@ def test_fighter_info_parse_response_valid(
 ) -> None:
     parsed_response = fighter_info_parser_valid.parse_response()
 
+    fighter_id = get_uuid_string("http://ufcstats.com/fighter_response_valid")
+    opponent_urls = [
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/d549cefc7c54ab78",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/767755fd74662dbf",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/b07aed698fba8624",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/2e5c2aa8e4ab9d82",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/0d7b51c9d2649a6e",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/7acbb0972e75281a",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/1338e2c7480bdf9e",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/8c0580d4fff106c1",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/13a0275fa13c4d26",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/9ce6d5a03af801b7",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/1338e2c7480bdf9e",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/f77c68bb4be8516d",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/f77c68bb4be8516d",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/7a703c565ccaa18f",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/b1a3e0aca758b322",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/0dba4df5f34d5ff0",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/65578a75fa7900e3",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/0c6d9ea8306c029e",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/92b62174c175ce19",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/b7ad576b8ae115e6",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/4a28cb716c19157a",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/523fa774700d7d3f",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/2e25c1d983c26311",
+        "http://ufcstats.com/fighter-details/e1147d3d2dabe1ce",
+        "http://ufcstats.com/fighter-details/34e552520a934063",
+    ]
+    opponent_id_list = [get_uuid_string(url) for url in opponent_urls]
+    opponent_ids = ", ".join(opponent_id_list)
+
     expected_response = Fighter(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fighter_id="f35bdc9b-f835-5992-ae94-48ea5429275a",
+        fighter_id=fighter_id,
         url="http://www.ufcstats.com/fighter_response_valid",
         full_name="Robert Whittaker",
         first_name="Robert",
@@ -42,24 +97,7 @@ def test_fighter_info_parse_response_valid(
         losses=9,
         draws=0,
         no_contests=0,
-        opponents=(
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 388259b0-1c58-5960-b225-a4ee9eb354a1, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "8d4acecd-f975-566b-a10e-585621f31688, 66d48dc7-da46-54bf-8eed-011be1485b5a, 10775baa-e6db-5ccc-bc65-85b1ab654b57, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 371a9460-9ac6-54c2-8600-2ae8b8e1538b, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "250aaa0d-deaf-5dff-9601-c244555edb6b, 66d48dc7-da46-54bf-8eed-011be1485b5a, fdc2b8a8-4418-5992-90a4-b11621b4f6b5, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 9c9ff3ac-399e-5f89-ba30-acd5a8e3c62a, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "49d27e53-c9e6-59f6-ac0e-c70129316258, 66d48dc7-da46-54bf-8eed-011be1485b5a, d784dec5-60f2-5fb7-b6e9-1dd4d04e41ed, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 393711bb-ef5c-5ab5-8d9b-ef8de0c9fa77, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "9c9ff3ac-399e-5f89-ba30-acd5a8e3c62a, 66d48dc7-da46-54bf-8eed-011be1485b5a, de76b42d-a4ed-5562-b039-4a70cc94fa6f, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, de76b42d-a4ed-5562-b039-4a70cc94fa6f, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "e67ea6df-c424-5d14-8e41-c63e1580b9f8, 66d48dc7-da46-54bf-8eed-011be1485b5a, d833894a-ac70-58b6-b135-5fd35820a02d, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 4bac55b0-c36b-535f-b701-ffeff246b779, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "7e5a2c8d-b1de-5472-9961-e9ba5082c2a6, 66d48dc7-da46-54bf-8eed-011be1485b5a, f61e0f81-ab82-5831-b36f-0acd30f62406, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 0f0ed865-43d3-552e-9346-a9b1a1dd042d, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "46a27c57-aa27-5c62-b9e4-385a09390d9f, 66d48dc7-da46-54bf-8eed-011be1485b5a, 40ad3d37-4a57-5e13-94ae-2f97325da82f, "
-            "66d48dc7-da46-54bf-8eed-011be1485b5a, 490e159a-4b43-5d5e-b825-6160515ecb82, 66d48dc7-da46-54bf-8eed-011be1485b5a, "
-            "9542ea1e-eebc-543c-8127-2719f9790f93, 66d48dc7-da46-54bf-8eed-011be1485b5a, 55ec5052-003b-5e10-9016-774bf3cc8f1d"
-        ),
+        opponents=opponent_ids,
     )
 
     assert parsed_response == expected_response

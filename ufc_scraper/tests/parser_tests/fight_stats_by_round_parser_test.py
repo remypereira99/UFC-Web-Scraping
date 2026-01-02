@@ -6,6 +6,7 @@ from entities import FightStatsByRound
 from parsers import FightStatByRoundParser
 from tests import FIGHT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
+from utils import get_uuid_string
 
 
 @pytest.fixture
@@ -23,11 +24,25 @@ def test_fight_stat_by_round_parse_response_valid(
 ) -> None:
     parsed_response = list(fight_stat_by_round_parser_valid.parse_response())
 
+    fight_id = get_uuid_string("http://ufcstats.com/fight_response_valid")
+    fighter_1_id = get_uuid_string(
+        "http://ufcstats.com/fighter-details/d661ce4da776fc20"
+    )
+    fighter_1_fight_stat_by_round_ids = [
+        get_uuid_string(fight_id + fighter_1_id + str(round)) for round in range(1, 6)
+    ]
+    fighter_2_id = get_uuid_string(
+        "http://ufcstats.com/fighter-details/aa72b0f831d0bfe5"
+    )
+    fighter_2_fight_stat_by_round_ids = [
+        get_uuid_string(fight_id + fighter_2_id + str(round)) for round in range(1, 6)
+    ]
+
     expected_response_fighter_1_round_1 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="92b919ea-9d7f-52b8-b17d-96587b3432bc",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_by_round_id=fighter_1_fight_stat_by_round_ids[0],
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         round=1,
         total_strikes_landed=42,
         total_strikes_attempted=42,
@@ -56,9 +71,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_1_round_2 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="90da4657-ae74-5178-ba00-5e61d3256c12",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_by_round_id=fighter_1_fight_stat_by_round_ids[1],
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         round=2,
         total_strikes_landed=32,
         total_strikes_attempted=49,
@@ -87,9 +102,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_1_round_3 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="2370f679-da4f-5a0c-bbc9-2d0e4110ab90",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_by_round_id=fighter_1_fight_stat_by_round_ids[2],
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         round=3,
         total_strikes_landed=28,
         total_strikes_attempted=44,
@@ -118,9 +133,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_1_round_4 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="f0fcc8cb-7062-530e-949f-79f87ef81f5e",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_by_round_id=fighter_1_fight_stat_by_round_ids[3],
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         round=4,
         total_strikes_landed=50,
         total_strikes_attempted=65,
@@ -149,9 +164,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_1_round_5 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="b0d47741-13c9-5fc1-8081-61f04584388f",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_by_round_id=fighter_1_fight_stat_by_round_ids[4],
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         round=5,
         total_strikes_landed=38,
         total_strikes_attempted=63,
@@ -180,9 +195,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_2_round_1 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="8b84e694-5239-579a-ad96-9926e7252681",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_by_round_id=fighter_2_fight_stat_by_round_ids[0],
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         round=1,
         total_strikes_landed=1,
         total_strikes_attempted=1,
@@ -211,9 +226,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_2_round_2 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="62585682-b634-5137-a0de-bfecd6c7ed61",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_by_round_id=fighter_2_fight_stat_by_round_ids[1],
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         round=2,
         total_strikes_landed=10,
         total_strikes_attempted=30,
@@ -242,9 +257,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_2_round_3 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="7073a01a-bfb3-5070-94cf-928b432fac2f",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_by_round_id=fighter_2_fight_stat_by_round_ids[2],
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         round=3,
         total_strikes_landed=13,
         total_strikes_attempted=25,
@@ -273,9 +288,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_2_round_4 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="20f57730-725f-5b94-9cc8-9ba0cda81790",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_by_round_id=fighter_2_fight_stat_by_round_ids[3],
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         round=4,
         total_strikes_landed=14,
         total_strikes_attempted=30,
@@ -304,9 +319,9 @@ def test_fight_stat_by_round_parse_response_valid(
 
     expected_response_fighter_2_round_5 = FightStatsByRound(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_by_round_id="447974af-5e0e-50f8-af9e-6f2b6a6d4c4e",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_by_round_id=fighter_2_fight_stat_by_round_ids[4],
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         round=5,
         total_strikes_landed=15,
         total_strikes_attempted=33,
