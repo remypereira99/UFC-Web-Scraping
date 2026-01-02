@@ -78,10 +78,11 @@ class Fight:
 
     scraped_at: str
     fight_id: str
+    event_id: str
     url: str
     fighter_1_id: str
     fighter_2_id: str
-    weight_class: str
+    weight_class: Optional[str]
     num_rounds: int
     finish_method: str
     primary_finish_method: str
