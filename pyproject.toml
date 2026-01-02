@@ -22,3 +22,6 @@ dependencies = [
 select = ["E4", "E7", "E9", "F", "D"]
 ignore = ["D107"]
 exclude = ["ufc_scraper/tests/**/*"]
+
+[tool.ruff.format]
+quote-style = "double"
