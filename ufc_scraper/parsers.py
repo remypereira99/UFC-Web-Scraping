@@ -17,7 +17,12 @@ from constants import (
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
 from entities import Event, Fight, Fighter, FightStats, FightStatsByRound
-from utils import clean_string, get_uuid_string, get_strikes_landed_attempted
+from utils import (
+    clean_string,
+    get_uuid_string,
+    get_strikes_landed_attempted,
+    format_href,
+)
 
 
 class _Parser(ABC):
@@ -147,7 +152,7 @@ class FightInfoParser(_Parser):
     def _get_fighter_ids(self) -> None:
         all_urls = self._safe_css_get_all(self._css_queries["href_query"])
         fighter_urls = [
-            url.replace("www.", "") for url in all_urls if "fighter-details" in url
+            format_href(url) for url in all_urls if "fighter-details" in url
         ]
         fighter_1_url = fighter_urls[0]
         fighter_2_url = fighter_urls[1]
@@ -291,7 +296,7 @@ class FighterInfoParser(_Parser):
             "nickname_query": "p.b-content__Nickname::text",
             "stats_query": "li.b-list__box-list-item::text",
             "record_query": "span.b-content__title-record::text",
-            "opponents_query": "a.b-link::text",
+            "opponents_query": "a[href*='fighter-details']::attr(href)",
         }
         self._fighter_stats = self._safe_css_get_all(self._css_queries["stats_query"])
 
@@ -362,31 +367,8 @@ class FighterInfoParser(_Parser):
             )
 
     def _get_opponents(self) -> None:
-        opponent_text_raw = self._safe_css_get_all(self._css_queries["opponents_query"])
-        opponent_text_clean = [clean_string(opponent) for opponent in opponent_text_raw]
-        opponent_urls = self._safe_css_get_all(self._css_queries["href_query"])
-        opponent_text_urls_list = list(zip(opponent_text_clean, opponent_urls))
-
-        text_exclusion_list = [
-            ":",
-            "ufc",
-            "preview",
-            "dwcs",
-            "vs",
-            "strikeforce",
-            " - ",
-            "pride",
-            "dream",
-        ]
-        opponent_urls_filtered = [
-            opponent_url
-            for opponent_name, opponent_url in opponent_text_urls_list
-            if opponent_url != self._url
-            and all(term not in opponent_name.lower() for term in text_exclusion_list)
-        ]
-        opponent_id_list = [
-            get_uuid_string(opponent_url) for opponent_url in opponent_urls_filtered
-        ]
+        opponent_urls = self._safe_css_get_all(self._css_queries["opponents_query"])
+        opponent_id_list = [get_uuid_string(format_href(url)) for url in opponent_urls]
 
         self._opponents = ", ".join(opponent_id_list)
 
@@ -490,7 +472,9 @@ class EventInfoParser(_Parser):
 
     def _get_fights(self) -> None:
         fight_urls = self._safe_css_get_all(self._css_queries["fight_urls_query"])
-        fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
+        fight_ids = [
+            get_uuid_string(format_href(fight_url)) for fight_url in fight_urls
+        ]
         self._fights = ", ".join(fight_ids)
 
     def parse_response(self) -> Event:
@@ -566,8 +550,8 @@ class FightStatParser(_Parser):
             self._safe_css_get_all(self._css_queries["fighter_urls_query"])
         )
         fighter_1_url, fighter_2_url = fighter_urls
-        self._fighter_1_id = get_uuid_string(fighter_1_url)
-        self._fighter_2_id = get_uuid_string(fighter_2_url)
+        self._fighter_1_id = get_uuid_string(format_href(fighter_1_url))
+        self._fighter_2_id = get_uuid_string(format_href(fighter_2_url))
 
     def _get_fight_stat_headers(self) -> None:
         headers = self._safe_css_get_all(self._css_queries["headers_query"])
