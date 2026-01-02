@@ -21,7 +21,6 @@ from utils import (
     clean_string,
     get_uuid_string,
     get_strikes_landed_attempted,
-    format_href,
 )
 
 
@@ -29,7 +28,7 @@ class _Parser(ABC):
     def __init__(self, response: Response):
         self._response = response
         self._url = self._response.url
-        self._id = get_uuid_string(format_href(self._url))
+        self._id = get_uuid_string(self._url)
 
     @abstractmethod
     def parse_response(self) -> Any:
@@ -147,13 +146,11 @@ class FightInfoParser(_Parser):
 
     def _get_event_id(self) -> None:
         event_url = self._safe_css_get(self._css_queries["event_href_query"])
-        self._event_id = get_uuid_string(format_href(event_url))
+        self._event_id = get_uuid_string(event_url)
 
     def _get_fighter_ids(self) -> None:
         all_urls = self._safe_css_get_all(self._css_queries["href_query"])
-        fighter_urls = [
-            format_href(url) for url in all_urls if "fighter-details" in url
-        ]
+        fighter_urls = [url for url in all_urls if "fighter-details" in url]
         fighter_1_url = fighter_urls[0]
         fighter_2_url = fighter_urls[1]
         self._fighter_1_id = get_uuid_string(fighter_1_url)
@@ -368,7 +365,7 @@ class FighterInfoParser(_Parser):
 
     def _get_opponents(self) -> None:
         opponent_urls = self._safe_css_get_all(self._css_queries["opponents_query"])
-        opponent_id_list = [get_uuid_string(format_href(url)) for url in opponent_urls]
+        opponent_id_list = [get_uuid_string(url) for url in opponent_urls]
 
         self._opponents = ", ".join(opponent_id_list)
 
@@ -472,9 +469,7 @@ class EventInfoParser(_Parser):
 
     def _get_fights(self) -> None:
         fight_urls = self._safe_css_get_all(self._css_queries["fight_urls_query"])
-        fight_ids = [
-            get_uuid_string(format_href(fight_url)) for fight_url in fight_urls
-        ]
+        fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
         self._fights = ", ".join(fight_ids)
 
     def parse_response(self) -> Event:
@@ -550,8 +545,8 @@ class FightStatParser(_Parser):
             self._safe_css_get_all(self._css_queries["fighter_urls_query"])
         )
         fighter_1_url, fighter_2_url = fighter_urls
-        self._fighter_1_id = get_uuid_string(format_href(fighter_1_url))
-        self._fighter_2_id = get_uuid_string(format_href(fighter_2_url))
+        self._fighter_1_id = get_uuid_string(fighter_1_url)
+        self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_fight_stat_headers(self) -> None:
         headers = self._safe_css_get_all(self._css_queries["headers_query"])
