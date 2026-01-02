@@ -5,6 +5,7 @@ from entities import Event
 from parsers import EventInfoParser
 from tests import EVENT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
+from utils import get_uuid_string
 
 
 @pytest.fixture
@@ -20,9 +21,28 @@ def test_event_info_parse_response_valid(
 ) -> None:
     parsed_response = event_info_parser_valid.parse_response()
 
+    event_id = get_uuid_string("http://ufcstats.com/event_response_valid")
+    fight_urls = [
+        "http://ufcstats.com/fight-details/ebf7cea27b83c432",
+        "http://ufcstats.com/fight-details/b8bf186f884678ea",
+        "http://ufcstats.com/fight-details/b09f54654b0f95f5",
+        "http://ufcstats.com/fight-details/cc11a0762f246fa4",
+        "http://ufcstats.com/fight-details/108434acbbd75d26",
+        "http://ufcstats.com/fight-details/781a2ea50f5ae68f",
+        "http://ufcstats.com/fight-details/1d65c141776949d6",
+        "http://ufcstats.com/fight-details/919e3c5cc6999cb3",
+        "http://ufcstats.com/fight-details/af6eeea1cfe33240",
+        "http://ufcstats.com/fight-details/df7928de73fc2fe8",
+        "http://ufcstats.com/fight-details/5c783cd188425783",
+        "http://ufcstats.com/fight-details/bde635a4f345bc3e",
+        "http://ufcstats.com/fight-details/6114076c689e8457",
+    ]
+    fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
+    fights = ", ".join(fight_ids)
+
     expected_response = Event(
         scraped_at="2000-01-01 00:00:00 UTC",
-        event_id="42935486-0863-505f-a12f-1f96955a0794",
+        event_id=event_id,
         url="http://www.ufcstats.com/event_response_valid",
         name="UFC 308: Topuria vs. Holloway",
         date="October 26, 2024",
@@ -30,13 +50,7 @@ def test_event_info_parse_response_valid(
         city="Abu Dhabi",
         state="Abu Dhabi",
         country="United Arab Emirates",
-        fights=(
-            "b85fab4f-cbb1-5f54-af41-8f5dec7b2f37, 285d33cd-d7bc-5c1d-8689-beef4d16c610, 644807e9-aa74-53e0-8c49-ee3ce5afda1e, "
-            "e6321b03-713b-59a4-bbfe-c93474ea82d5, 9f61f3da-b514-5ea4-aeaf-4282b6be5c23, 83951809-e087-5a84-8705-7a92217e1197, "
-            "67029387-1874-5324-942b-549ef16e9746, 65bf1a92-d9f5-5658-9c06-8ec58b1c9e6e, 0282dae7-bb29-57ca-89f2-b51c6bb56cf2, "
-            "114c5e2c-4875-5816-b24c-2854c58b92c4, fc5e6c3a-f49a-5b01-b178-a7f61317dc20, 10813345-120b-5df4-ba69-8140a867dafd, "
-            "9b1ae4b1-de88-5d7b-9c08-06aac5e7c86a"
-        ),
+        fights=fights,
     )
 
     assert parsed_response == expected_response

@@ -29,7 +29,7 @@ class _Parser(ABC):
     def __init__(self, response: Response):
         self._response = response
         self._url = self._response.url
-        self._id = get_uuid_string(self._url)
+        self._id = get_uuid_string(format_href(self._url))
 
     @abstractmethod
     def parse_response(self) -> Any:
@@ -147,7 +147,7 @@ class FightInfoParser(_Parser):
 
     def _get_event_id(self) -> None:
         event_url = self._safe_css_get(self._css_queries["event_href_query"])
-        self._event_id = get_uuid_string(event_url)
+        self._event_id = get_uuid_string(format_href(event_url))
 
     def _get_fighter_ids(self) -> None:
         all_urls = self._safe_css_get_all(self._css_queries["href_query"])
@@ -438,7 +438,7 @@ class EventInfoParser(_Parser):
         super().__init__(response)
         self._css_queries: Dict[str, str] = {
             "event_name_query": "span.b-content__title-highlight::text",
-            "fight_urls_query": "a.b-flag::attr(href)",
+            "fight_urls_query": "a[href*='fight-details']::attr(href)",
         }
         self._event_date_location = self._safe_css_get_all(
             "li.b-list__box-list-item::text"

@@ -5,6 +5,7 @@ from entities import FightStats
 from parsers import FightStatParser
 from tests import FIGHT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
+from utils import get_uuid_string
 
 
 @pytest.fixture
@@ -20,11 +21,21 @@ def test_fight_stat_parse_response_valid(
 ) -> None:
     parsed_response = list(fight_stat_parser_valid.parse_response())
 
+    fight_id = get_uuid_string("http://ufcstats.com/fight_response_valid")
+    fighter_1_id = get_uuid_string(
+        "http://ufcstats.com/fighter-details/d661ce4da776fc20"
+    )
+    fighter_1_fight_stat_id = get_uuid_string(fight_id + fighter_1_id)
+    fighter_2_id = get_uuid_string(
+        "http://ufcstats.com/fighter-details/aa72b0f831d0bfe5"
+    )
+    fighter_2_fight_stat_id = get_uuid_string(fight_id + fighter_2_id)
+
     expected_response_fighter_1 = FightStats(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_id="d0e81594-355c-59a2-a7c8-5b4790107ce8",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="957ba518-e9ac-576b-92ef-8d60d89e73a1",
+        fight_stat_id=fighter_1_fight_stat_id,
+        fight_id=fight_id,
+        fighter_id=fighter_1_id,
         url="http://www.ufcstats.com/fight_response_valid",
         total_strikes_landed=190,
         total_strikes_attempted=263,
@@ -53,9 +64,9 @@ def test_fight_stat_parse_response_valid(
 
     expected_response_fighter_2 = FightStats(
         scraped_at="2000-01-01 00:00:00 UTC",
-        fight_stat_id="8a65ff90-c455-5d2f-9666-262032f8bfe4",
-        fight_id="6c8c2ab9-07f2-511f-ac1f-5037fbc2bf42",
-        fighter_id="1fa816e9-e0c1-56b8-a267-4daf7b1e07ab",
+        fight_stat_id=fighter_2_fight_stat_id,
+        fight_id=fight_id,
+        fighter_id=fighter_2_id,
         url="http://www.ufcstats.com/fight_response_valid",
         total_strikes_landed=53,
         total_strikes_attempted=119,
