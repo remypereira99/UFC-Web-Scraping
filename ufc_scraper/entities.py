@@ -121,7 +121,7 @@ class Fighter:
     losses: int
     draws: int
     no_contests: int
-    opponents: str
+    fight_ids: Optional[str]
 
 
 @dataclass
