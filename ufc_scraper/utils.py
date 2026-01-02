@@ -61,3 +61,21 @@ def get_strikes_landed_attempted(fight_stat: str) -> Tuple[int, int]:
     attempted = int(fight_stat_split[1])
 
     return landed, attempted
+
+
+def format_href(url: str) -> str:
+    """Remove the 'www.' subdomain from a URL string.
+
+    Uses a regular expression to strip 'www.' when it appears
+    immediately after the URL scheme (e.g., http:// or https://).
+    This is because the URLs in the hrefs have www. but the URLs
+    on each page don't, so this helps ensure the IDs are consistent.
+
+    Args:
+        url (str): The URL from which the 'www.' subdomain should be removed.
+
+    Returns:
+        str: The normalized URL without the 'www.' subdomain.
+
+    """
+    return re.sub(r"(?<=://)www\.", "", url)
