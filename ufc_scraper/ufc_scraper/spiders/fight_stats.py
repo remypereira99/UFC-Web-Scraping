@@ -30,14 +30,14 @@ class CrawlFightStats(scrapy.Spider):
     def _get_event_urls(self, response: Response) -> Any:
         """Get all event urls from main event page."""
         yield from response.follow_all(
-            response.css("a.b-link::attr(href)").getall(),
+            response.css("a[href*='event-details']::attr(href)").getall(),
             callback=self._get_fight_urls,
         )
 
     def _get_fight_urls(self, response: Response) -> Any:
         """Get all fight urls from each event page."""
         yield from response.follow_all(
-            response.css("a.b-link::attr(href)").getall(),
+            response.css("a[href*='fight-details']::attr(href)").getall(),
             callback=self._get_fight_stats,
         )
 
