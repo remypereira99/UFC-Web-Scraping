@@ -13,7 +13,7 @@ from . import (
     TOTALS_STATS_EXPECTED_HEADERS,
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
-from base_parser import Parser
+from ufc_scraper.parsers.base_parser import Parser
 from entities import FightStats, FightStatsByRound
 from utils import (
     clean_string,
@@ -140,39 +140,39 @@ class FightStatParser(Parser):
             fighter_stat_dict["Total str."]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Sig. str.)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Sig. str."])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Head)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Head"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Body)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Body"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Leg)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Leg"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_strikes_landed_attempted(fighter_stat_dict["Distance)"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict["Distance"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Clinch)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Clinch"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Ground)"])
+            get_strikes_landed_attempted(fighter_stat_dict["Ground"])
         )
-        knockdowns = int(fighter_stat_dict["KD)"])
+        knockdowns = int(fighter_stat_dict["KD"])
         (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict["Td"]
         )
-        control_time_raw = clean_string(fighter_stat_dict["Ctrl)"])
+        control_time_raw = clean_string(fighter_stat_dict["Ctrl"])
         (control_time_minutes_string, control_time_seconds_string) = (
             control_time_raw.split(":")
         )
         control_time_minutes = int(control_time_minutes_string)
         control_time_seconds = int(control_time_seconds_string)
-        submissions_attempted = int(fighter_stat_dict["Sub. att)"])
-        reversals = int(fighter_stat_dict["Rev.)"])
+        submissions_attempted = int(fighter_stat_dict["Sub. att"])
+        reversals = int(fighter_stat_dict["Rev."])
 
         return FightStats(
             scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -254,39 +254,39 @@ class FightStatByRoundParser(FightStatParser):
             fighter_stat_dict[f"Total str._round_{round}"]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Sig. str._round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Sig. str._round_{round}"])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Head_round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Head_round_{round}"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Body_round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Body_round_{round}"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Leg_round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Leg_round_{round}"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_strikes_landed_attempted(fighter_stat_dict[f"Distance_round_{round})"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict[f"Distance_round_{round}"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Clinch_round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Clinch_round_{round}"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Ground_round_{round})"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Ground_round_{round}"])
         )
-        knockdowns = int(fighter_stat_dict[f"KD_round_{round})"])
+        knockdowns = int(fighter_stat_dict[f"KD_round_{round}"])
         (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict[f"Td_round_{round}"]
         )
-        control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round})"])
+        control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round}"])
         (control_time_minutes_string, control_time_seconds_string) = (
             control_time_raw.split(":")
         )
         control_time_minutes = int(control_time_minutes_string)
         control_time_seconds = int(control_time_seconds_string)
-        submissions_attempted = int(fighter_stat_dict[f"Sub. att_round_{round})"])
-        reversals = int(fighter_stat_dict[f"Rev._round_{round})"])
+        submissions_attempted = int(fighter_stat_dict[f"Sub. att_round_{round}"])
+        reversals = int(fighter_stat_dict[f"Rev._round_{round}"])
 
         return FightStatsByRound(
             scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),

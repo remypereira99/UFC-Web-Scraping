@@ -45,9 +45,9 @@ class CssQueries:
     fight_stat_values_query: str = (
         "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
     )
-    next_element_xpath: str = ("./following-sibling::text()",)
-    secondary_finish_method_xpath: str = ("./ancestor::p/text()[normalize-space()]",)
-    span_text_xpath: str = ("./span/text()",)
+    next_element_xpath: str = "./following-sibling::text()"
+    secondary_finish_method_xpath: str = "./ancestor::p/text()[normalize-space()]"
+    span_text_xpath: str = "./span/text()"
 
 
 class Parser(ABC):
