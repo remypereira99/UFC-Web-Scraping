@@ -8,12 +8,12 @@ from datetime import datetime, timezone
 
 from scrapy.http import Response
 
-from . import _Parser
+from base_parser import Parser
 from entities import Fighter
 from utils import clean_string, get_uuid_string
 
 
-class FighterInfoParser(_Parser):
+class FighterInfoParser(Parser):
     """Parses HTTP responses of ufcstats.com fighter pages.
 
     Parses key attributes of UFC fighters and yields Fighter dataclass.

@@ -9,7 +9,8 @@ from typing import Dict
 
 from scrapy.http import Response
 
-from . import _Parser, WEIGHT_CLASSES_LOWER
+from . import WEIGHT_CLASSES_LOWER
+from base_parser import Parser
 from entities import Fight
 from utils import (
     clean_string,
@@ -17,7 +18,7 @@ from utils import (
 )
 
 
-class FightInfoParser(_Parser):
+class FightInfoParser(Parser):
     """Parses HTTP responses of ufcstats.com fight pages.
 
     Parses key attributes of UFC fights and yields Fight dataclass.

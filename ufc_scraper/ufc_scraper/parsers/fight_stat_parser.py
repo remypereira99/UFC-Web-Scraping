@@ -10,10 +10,10 @@ from typing import Any, Iterator
 from scrapy.http import Response
 
 from . import (
-    _Parser,
     TOTALS_STATS_EXPECTED_HEADERS,
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
+from base_parser import Parser
 from entities import FightStats, FightStatsByRound
 from utils import (
     clean_string,
@@ -22,7 +22,7 @@ from utils import (
 )
 
 
-class FightStatParser(_Parser):
+class FightStatParser(Parser):
     """Parses HTTP responses of ufcstats.com fight pages.
 
     Parses fight statistics from UFC fights and yields a FightStats dataclass
