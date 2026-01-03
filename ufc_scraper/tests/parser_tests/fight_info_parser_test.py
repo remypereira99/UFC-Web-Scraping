@@ -39,6 +39,7 @@ def test_fight_info_parse_response_valid(
         fighter_2_id=fighter_2_id,
         fighter_1_outcome="W",
         fighter_2_outcome="L",
+        bout_type="Bantamweight Bout",
         weight_class="bantamweight",
         num_rounds=5,
         finish_method="Decision - Unanimous",
