@@ -5,7 +5,7 @@ from typing import Any
 import scrapy
 from scrapy.http import Response
 
-from parsers import FighterInfoParser
+from ufc_scraper.parsers.fighter_info_parser import FighterInfoParser
 
 
 class CrawlFighters(scrapy.Spider):
@@ -19,6 +19,9 @@ class CrawlFighters(scrapy.Spider):
         "AUTOTHROTTLE_MAX_DELAY": 10,
         "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
         "RANDOMIZE_DOWNLOAD_DELAY": True,
+        "HTTPCACHE_ENABLED": True,
+        "HTTPCACHE_DIR": "httpcache",
+        "HTTPCACHE_EXPIRATION_SECS": None,
     }
 
     start_urls = [

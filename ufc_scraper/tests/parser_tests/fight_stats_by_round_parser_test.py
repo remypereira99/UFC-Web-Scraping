@@ -3,7 +3,7 @@ import pytest
 
 
 from entities import FightStatsByRound
-from parsers import FightStatByRoundParser
+from ufc_scraper.ufc_scraper.parsers.fight_stat_parser import FightStatByRoundParser
 from tests import FIGHT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
 from utils import get_uuid_string
