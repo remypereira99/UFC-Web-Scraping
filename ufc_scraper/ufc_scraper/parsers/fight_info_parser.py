@@ -56,12 +56,12 @@ class FightInfoParser(Parser):
 
     def _get_weight_class(self) -> None:
         bout_type_text = self._safe_css_get_all(self._css_queries.bout_type_query)
-        bout_type = [
+        self._bout_type = [
             clean_string(text) for text in bout_type_text if clean_string(text) != ""
         ][0]
         self._weight_class = None
         for weight_class in WEIGHT_CLASSES_LOWER:
-            if weight_class in bout_type.lower():
+            if weight_class in self._bout_type.lower():
                 self._weight_class = weight_class
 
     def _get_num_rounds(self) -> None:
@@ -154,6 +154,7 @@ class FightInfoParser(Parser):
             fighter_2_id=self._fighter_2_id,
             fighter_1_outcome=self._fighter_1_outcome,
             fighter_2_outcome=self._fighter_2_outcome,
+            bout_type=self._bout_type,
             weight_class=self._weight_class,
             num_rounds=self._num_rounds,
             finish_method=self._finish_method,
