@@ -49,6 +49,11 @@ class FightInfoParser(Parser):
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
+    def _get_fighter_outcomes(self) -> None:
+        fight_outcomes = self._safe_css_get_all(self._css_queries.fight_outcomes_query)
+        self._fighter_1_outcome = clean_string(fight_outcomes[0])
+        self._fighter_2_outcome = clean_string(fight_outcomes[1])
+
     def _get_weight_class(self) -> None:
         bout_type_text = self._safe_css_get_all(self._css_queries.bout_type_query)
         bout_type = [
@@ -132,6 +137,7 @@ class FightInfoParser(Parser):
         """
         self._get_event_id()
         self._get_fighter_ids()
+        self._get_fighter_outcomes()
         self._get_weight_class()
         self._get_num_rounds()
         self._get_finish_method()
@@ -146,6 +152,8 @@ class FightInfoParser(Parser):
             url=self._url,
             fighter_1_id=self._fighter_1_id,
             fighter_2_id=self._fighter_2_id,
+            fighter_1_outcome=self._fighter_1_outcome,
+            fighter_2_outcome=self._fighter_2_outcome,
             weight_class=self._weight_class,
             num_rounds=self._num_rounds,
             finish_method=self._finish_method,

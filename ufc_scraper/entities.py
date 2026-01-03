@@ -82,6 +82,8 @@ class Fight:
     url: str
     fighter_1_id: str
     fighter_2_id: str
+    fighter_1_outcome: str
+    fighter_2_outcome: str
     weight_class: Optional[str]
     num_rounds: int
     finish_method: str
