@@ -5,7 +5,6 @@ fighters, and fight statistics (total and by-round).
 """
 
 from datetime import datetime, timezone
-from typing import Dict
 
 from scrapy.http import Response
 
@@ -32,18 +31,11 @@ class FightInfoParser(Parser):
         _id (str): Deterministic UUID derived from the response URL.
         _css_queries (Dict[str, str]): Mapping of semantic query names to
             CSS selectors used to extract fight metadata from the response.
-        _xpath_queries (Dict[str, str]): Mapping of semantic query names to
-            XPath expressions used to refine or post-process CSS selections.
 
     """
 
     def __init__(self, response: Response):
         super().__init__(response)
-        self._xpath_queries: Dict[str, str] = {
-            "next_element_xpath": "./following-sibling::text()",
-            "secondary_finish_method_xpath": "./ancestor::p/text()[normalize-space()]",
-            "span_text_xpath": "./span/text()",
-        }
 
     def _get_event_id(self) -> None:
         event_url = self._safe_css_get(self._css_queries.event_urls_query)
@@ -70,7 +62,7 @@ class FightInfoParser(Parser):
     def _get_num_rounds(self) -> None:
         num_rounds_raw = self._safe_css_get(
             query=self._css_queries.round_text_query,
-            xpath=self._xpath_queries["next_element_xpath"],
+            xpath=self._css_queries.next_element_xpath,
         )
         self._num_rounds = int(clean_string(num_rounds_raw))
 
@@ -87,7 +79,7 @@ class FightInfoParser(Parser):
             self._primary_finish_method = finish_method_clean.lower()
             secondary_finish_method_raw = self._safe_css_get(
                 query=self._css_queries.secondary_finish_method_query,
-                xpath=self._xpath_queries["secondary_finish_method_xpath"],
+                xpath=self._css_queries.secondary_finish_method_xpath,
             )
             self._secondary_finish_method = clean_string(
                 secondary_finish_method_raw
@@ -96,13 +88,13 @@ class FightInfoParser(Parser):
     def _get_finish_round(self) -> None:
         finish_round_raw = self._safe_css_get(
             query=self._css_queries.finish_round_query,
-            xpath=self._xpath_queries["next_element_xpath"],
+            xpath=self._css_queries.next_element_xpath,
         )
         self._finish_round = int(clean_string(finish_round_raw))
 
         finish_time_raw = self._safe_css_get(
             query=self._css_queries.finish_time_query,
-            xpath=self._xpath_queries["next_element_xpath"],
+            xpath=self._css_queries.next_element_xpath,
         )
         finish_time = clean_string(finish_time_raw).split(":")
         self._finish_time_minute = int(finish_time[0])
@@ -115,7 +107,7 @@ class FightInfoParser(Parser):
     def _get_judges(self) -> None:
         judge_and_referee_list = self._safe_css_get_all(
             query=self._css_queries.judges_query,
-            xpath=self._xpath_queries["span_text_xpath"],
+            xpath=self._css_queries.span_text_xpath,
         )
         self._judge_1 = ""
         self._judge_2 = ""
