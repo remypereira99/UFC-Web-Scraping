@@ -1,4 +1,7 @@
+"""Constants file for parser classes."""
+
 from typing import List
+
 
 WEIGHT_CLASSES_LOWER: List[str] = [
     "women's strawweight",
@@ -16,8 +19,6 @@ WEIGHT_CLASSES_LOWER: List[str] = [
     "catch weight",
     "open weight",
 ]
-
-HREF_QUERY: str = "a.b-link::attr(href)"
 
 TOTALS_STATS_EXPECTED_HEADERS: List[str] = [
     "KD",

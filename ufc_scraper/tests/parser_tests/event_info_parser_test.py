@@ -2,7 +2,7 @@ from freezegun import freeze_time
 import pytest
 
 from entities import Event
-from parsers import EventInfoParser
+from ufc_scraper.parsers.event_info_parser import EventInfoParser
 from tests import EVENT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
 from utils import get_uuid_string
