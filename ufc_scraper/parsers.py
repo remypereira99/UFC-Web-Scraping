@@ -12,9 +12,9 @@ from scrapy.http import Response
 
 from constants import (
     WEIGHT_CLASSES_LOWER,
-    HREF_QUERY,
     TOTALS_STATS_EXPECTED_HEADERS,
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
+    CssQueries,
 )
 from entities import Event, Fight, Fighter, FightStats, FightStatsByRound
 from utils import (
@@ -29,6 +29,7 @@ class _Parser(ABC):
         self._response = response
         self._url = self._response.url
         self._id = get_uuid_string(self._url)
+        self._css_queries = CssQueries()
 
     @abstractmethod
     def parse_response(self) -> Any:
@@ -122,22 +123,6 @@ class FightInfoParser(_Parser):
 
     def __init__(self, response: Response):
         super().__init__(response)
-        self._css_queries: Dict[str, str] = {
-            "href_query": HREF_QUERY,
-            "event_href_query": "a[href*='event-details']::attr(href)",
-            "bout_type_query": "i.b-fight-details__fight-title::text",
-            "round_text_query": ".b-fight-details__label:contains('Round:')",
-            "finish_method_query": (
-                ".b-fight-details__label:contains('Method:') + i::text"
-            ),
-            "secondary_finish_method_query": ".b-fight-details__label:contains('Details:')",
-            "finish_round_query": ".b-fight-details__label:contains('Round:')",
-            "finish_time_query": ".b-fight-details__label:contains('Time:')",
-            "referee_query": (
-                ".b-fight-details__label:contains('Referee:') + span::text"
-            ),
-            "judges_query": "i.b-fight-details__text-item",
-        }
         self._xpath_queries: Dict[str, str] = {
             "next_element_xpath": "./following-sibling::text()",
             "secondary_finish_method_xpath": "./ancestor::p/text()[normalize-space()]",
@@ -145,11 +130,11 @@ class FightInfoParser(_Parser):
         }
 
     def _get_event_id(self) -> None:
-        event_url = self._safe_css_get(self._css_queries["event_href_query"])
+        event_url = self._safe_css_get(self._css_queries.event_urls_query)
         self._event_id = get_uuid_string(event_url)
 
     def _get_fighter_ids(self) -> None:
-        all_urls = self._safe_css_get_all(self._css_queries["href_query"])
+        all_urls = self._safe_css_get_all(self._css_queries.href_query)
         fighter_urls = [url for url in all_urls if "fighter-details" in url]
         fighter_1_url = fighter_urls[0]
         fighter_2_url = fighter_urls[1]
@@ -157,7 +142,7 @@ class FightInfoParser(_Parser):
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_weight_class(self) -> None:
-        bout_type_text = self._safe_css_get_all(self._css_queries["bout_type_query"])
+        bout_type_text = self._safe_css_get_all(self._css_queries.bout_type_query)
         bout_type = [
             clean_string(text) for text in bout_type_text if clean_string(text) != ""
         ][0]
@@ -168,13 +153,13 @@ class FightInfoParser(_Parser):
 
     def _get_num_rounds(self) -> None:
         num_rounds_raw = self._safe_css_get(
-            query=self._css_queries["round_text_query"],
+            query=self._css_queries.round_text_query,
             xpath=self._xpath_queries["next_element_xpath"],
         )
         self._num_rounds = int(clean_string(num_rounds_raw))
 
     def _get_finish_method(self) -> None:
-        finish_method_raw = self._safe_css_get(self._css_queries["finish_method_query"])
+        finish_method_raw = self._safe_css_get(self._css_queries.finish_method_query)
         finish_method_clean = clean_string(finish_method_raw)
         self._finish_method = finish_method_clean
 
@@ -185,7 +170,7 @@ class FightInfoParser(_Parser):
         else:
             self._primary_finish_method = finish_method_clean.lower()
             secondary_finish_method_raw = self._safe_css_get(
-                query=self._css_queries["secondary_finish_method_query"],
+                query=self._css_queries.secondary_finish_method_query,
                 xpath=self._xpath_queries["secondary_finish_method_xpath"],
             )
             self._secondary_finish_method = clean_string(
@@ -194,13 +179,13 @@ class FightInfoParser(_Parser):
 
     def _get_finish_round(self) -> None:
         finish_round_raw = self._safe_css_get(
-            query=self._css_queries["finish_round_query"],
+            query=self._css_queries.finish_round_query,
             xpath=self._xpath_queries["next_element_xpath"],
         )
         self._finish_round = int(clean_string(finish_round_raw))
 
         finish_time_raw = self._safe_css_get(
-            query=self._css_queries["finish_time_query"],
+            query=self._css_queries.finish_time_query,
             xpath=self._xpath_queries["next_element_xpath"],
         )
         finish_time = clean_string(finish_time_raw).split(":")
@@ -208,12 +193,12 @@ class FightInfoParser(_Parser):
         self._finish_time_second = int(finish_time[1])
 
     def _get_referee(self) -> None:
-        referee_raw = self._safe_css_get(self._css_queries["referee_query"])
+        referee_raw = self._safe_css_get(self._css_queries.referee_query)
         self._referee = clean_string(referee_raw)
 
     def _get_judges(self) -> None:
         judge_and_referee_list = self._safe_css_get_all(
-            query=self._css_queries["judges_query"],
+            query=self._css_queries.judges_query,
             xpath=self._xpath_queries["span_text_xpath"],
         )
         self._judge_1 = ""
@@ -287,25 +272,21 @@ class FighterInfoParser(_Parser):
 
     def __init__(self, response: Response):
         super().__init__(response)
-        self._css_queries: Dict[str, str] = {
-            "href_query": HREF_QUERY,
-            "name_query": "span.b-content__title-highlight::text",
-            "nickname_query": "p.b-content__Nickname::text",
-            "stats_query": "li.b-list__box-list-item::text",
-            "record_query": "span.b-content__title-record::text",
-            "fights_query": "a[href*='fight-details']::attr(href)",
-        }
-        self._fighter_stats = self._safe_css_get_all(self._css_queries["stats_query"])
+        self._fighter_stats = self._safe_css_get_all(
+            self._css_queries.fighter_stats_query
+        )
 
     def _get_fighter_name(self) -> None:
-        name_raw = self._safe_css_get(self._css_queries["name_query"])
+        name_raw = self._safe_css_get(self._css_queries.fighter_name_query)
         name_clean = clean_string(name_raw)
         names = name_clean.split(" ")
         self._full_name = " ".join(names)
         self._first_name = names[0]
         self._last_names = " ".join(names[1:])
 
-        nickname_raw = self._response.css(self._css_queries["nickname_query"]).get()
+        nickname_raw = self._response.css(
+            self._css_queries.fighter_nickname_query
+        ).get()
         self._nickname = clean_string(nickname_raw) if nickname_raw else ""
 
     def _get_fighter_height(self) -> None:
@@ -347,7 +328,7 @@ class FighterInfoParser(_Parser):
             self._dob_formatted = datetime.strftime(dob_dt, "%Y-%m-%d")
 
     def _get_fighter_record(self) -> None:
-        record_raw = self._safe_css_get(self._css_queries["record_query"])
+        record_raw = self._safe_css_get(self._css_queries.fighter_record_query)
         record_clean = clean_string(record_raw)
         self._record = record_clean.split(": ")[1]
         self._wins = int(self._record.split("-")[0])
@@ -365,7 +346,7 @@ class FighterInfoParser(_Parser):
 
     def _get_fight_ids(self) -> None:
         self._fight_ids = None
-        fight_urls = self._response.css(self._css_queries["fights_query"]).getall()
+        fight_urls = self._response.css(self._css_queries.fighter_fights_query).getall()
         if fight_urls:
             fight_id_list = [get_uuid_string(url) for url in fight_urls]
 
@@ -435,16 +416,12 @@ class EventInfoParser(_Parser):
 
     def __init__(self, response: Response):
         super().__init__(response)
-        self._css_queries: Dict[str, str] = {
-            "event_name_query": "span.b-content__title-highlight::text",
-            "fight_urls_query": "a[href*='fight-details']::attr(href)",
-        }
         self._event_date_location = self._safe_css_get_all(
             "li.b-list__box-list-item::text"
         )
 
     def _get_event_name(self) -> None:
-        event_name_raw = self._safe_css_get(self._css_queries["event_name_query"])
+        event_name_raw = self._safe_css_get(self._css_queries.event_name_query)
         self._name = clean_string(event_name_raw)
 
     def _get_event_date(self) -> None:
@@ -470,7 +447,7 @@ class EventInfoParser(_Parser):
             self._country = event_location_split[1]
 
     def _get_fights(self) -> None:
-        fight_urls = self._safe_css_get_all(self._css_queries["fight_urls_query"])
+        fight_urls = self._safe_css_get_all(self._css_queries.fight_urls_query)
         fight_ids = [get_uuid_string(fight_url) for fight_url in fight_urls]
         self._fights = ", ".join(fight_ids)
 
@@ -523,38 +500,22 @@ class FightStatParser(_Parser):
 
     def __init__(self, response: Response):
         super().__init__(response)
-        self._css_queries: Dict[str, str] = {
-            "fighter_urls_query": "a.b-link.b-fight-details__person-link::attr(href)",
-            "headers_query": (
-                "thead.b-fight-details__table-head th.b-fight-details__table-col::text"
-            ),
-            "round_headers_query": (
-                "thead.b-fight-details__table-row  th.b-fight-details__table-col::text"
-            ),
-            "stat_values_query": (
-                "tbody.b-fight-details__table-body p.b-fight-details__table-text::text"
-            ),
-            "rows_query": (
-                "tbody.b-fight-details__table-body tr.b-fight-details__table-row"
-            ),
-            "values_query": "p.b-fight-details__table-text::text",
-        }
         self._fight_id = self._id
         self._get_fighter_ids()
 
     def _get_fighter_ids(self) -> None:
         fighter_urls = tuple(
-            self._safe_css_get_all(self._css_queries["fighter_urls_query"])
+            self._safe_css_get_all(self._css_queries.fighter_urls_query)
         )
         fighter_1_url, fighter_2_url = fighter_urls
         self._fighter_1_id = get_uuid_string(fighter_1_url)
         self._fighter_2_id = get_uuid_string(fighter_2_url)
 
     def _get_fight_stat_headers(self) -> None:
-        headers = self._safe_css_get_all(self._css_queries["headers_query"])
+        headers = self._safe_css_get_all(self._css_queries.fight_stat_headers_query)
         headers_clean = [clean_string(header) for header in headers]
 
-        round_headers = self._safe_css_get_all(self._css_queries["round_headers_query"])
+        round_headers = self._safe_css_get_all(self._css_queries.round_headers_query)
         round_headers_clean = [
             clean_string(round_header) for round_header in round_headers
         ]
@@ -593,7 +554,7 @@ class FightStatParser(_Parser):
         )
 
     def _get_fight_stat_values(self) -> None:
-        values = self._safe_css_get_all(self._css_queries["stat_values_query"])
+        values = self._safe_css_get_all(self._css_queries.fight_stat_values_query)
         values_clean = [
             clean_string(value) for value in values if clean_string(value) != ""
         ]
@@ -637,39 +598,39 @@ class FightStatParser(_Parser):
             fighter_stat_dict["Total str."]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Sig. str."])
+            get_strikes_landed_attempted(fighter_stat_dict["Sig. str.)"])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Head"])
+            get_strikes_landed_attempted(fighter_stat_dict["Head)"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Body"])
+            get_strikes_landed_attempted(fighter_stat_dict["Body)"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Leg"])
+            get_strikes_landed_attempted(fighter_stat_dict["Leg)"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_strikes_landed_attempted(fighter_stat_dict["Distance"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict["Distance)"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Clinch"])
+            get_strikes_landed_attempted(fighter_stat_dict["Clinch)"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_strikes_landed_attempted(fighter_stat_dict["Ground"])
+            get_strikes_landed_attempted(fighter_stat_dict["Ground)"])
         )
-        knockdowns = int(fighter_stat_dict["KD"])
+        knockdowns = int(fighter_stat_dict["KD)"])
         (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict["Td"]
         )
-        control_time_raw = clean_string(fighter_stat_dict["Ctrl"])
+        control_time_raw = clean_string(fighter_stat_dict["Ctrl)"])
         (control_time_minutes_string, control_time_seconds_string) = (
             control_time_raw.split(":")
         )
         control_time_minutes = int(control_time_minutes_string)
         control_time_seconds = int(control_time_seconds_string)
-        submissions_attempted = int(fighter_stat_dict["Sub. att"])
-        reversals = int(fighter_stat_dict["Rev."])
+        submissions_attempted = int(fighter_stat_dict["Sub. att)"])
+        reversals = int(fighter_stat_dict["Rev.)"])
 
         return FightStats(
             scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
@@ -751,39 +712,39 @@ class FightStatByRoundParser(FightStatParser):
             fighter_stat_dict[f"Total str._round_{round}"]
         )
         (significant_strikes_landed, significant_strikes_attempted) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Sig. str._round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Sig. str._round_{round})"])
         )
         (significant_strikes_landed_head, significant_strikes_attempted_head) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Head_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Head_round_{round})"])
         )
         (significant_strikes_landed_body, significant_strikes_attempted_body) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Body_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Body_round_{round})"])
         )
         (significant_strikes_landed_leg, significant_strikes_attempted_leg) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Leg_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Leg_round_{round})"])
         )
         (
             significant_strikes_landed_distance,
             significant_strikes_attempted_distance,
-        ) = get_strikes_landed_attempted(fighter_stat_dict[f"Distance_round_{round}"])
+        ) = get_strikes_landed_attempted(fighter_stat_dict[f"Distance_round_{round})"])
         (significant_strikes_landed_clinch, significant_strikes_attempted_clinch) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Clinch_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Clinch_round_{round})"])
         )
         (significant_strikes_landed_ground, significant_strikes_attempted_ground) = (
-            get_strikes_landed_attempted(fighter_stat_dict[f"Ground_round_{round}"])
+            get_strikes_landed_attempted(fighter_stat_dict[f"Ground_round_{round})"])
         )
-        knockdowns = int(fighter_stat_dict[f"KD_round_{round}"])
+        knockdowns = int(fighter_stat_dict[f"KD_round_{round})"])
         (takedowns_landed, takedowns_attempted) = get_strikes_landed_attempted(
             fighter_stat_dict[f"Td_round_{round}"]
         )
-        control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round}"])
+        control_time_raw = clean_string(fighter_stat_dict[f"Ctrl_round_{round})"])
         (control_time_minutes_string, control_time_seconds_string) = (
             control_time_raw.split(":")
         )
         control_time_minutes = int(control_time_minutes_string)
         control_time_seconds = int(control_time_seconds_string)
-        submissions_attempted = int(fighter_stat_dict[f"Sub. att_round_{round}"])
-        reversals = int(fighter_stat_dict[f"Rev._round_{round}"])
+        submissions_attempted = int(fighter_stat_dict[f"Sub. att_round_{round})"])
+        reversals = int(fighter_stat_dict[f"Rev._round_{round})"])
 
         return FightStatsByRound(
             scraped_at=datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC"),
