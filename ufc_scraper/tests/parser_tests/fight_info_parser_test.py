@@ -37,6 +37,8 @@ def test_fight_info_parse_response_valid(
         url="http://www.ufcstats.com/fight_response_valid",
         fighter_1_id=fighter_1_id,
         fighter_2_id=fighter_2_id,
+        fighter_1_outcome="W",
+        fighter_2_outcome="L",
         weight_class="bantamweight",
         num_rounds=5,
         finish_method="Decision - Unanimous",

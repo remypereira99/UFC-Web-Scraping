@@ -23,6 +23,7 @@ class CssQueries:
     fight_urls_query: str = "a[href*='fight-details']::attr(href)"
     fighter_urls_query: str = "a.b-link.b-fight-details__person-link::attr(href)"
     bout_type_query: str = "i.b-fight-details__fight-title::text"
+    fight_outcomes_query: str = "i.b-fight-details__person-status::text"
     round_text_query: str = ".b-fight-details__label:contains('Round:')"
     finish_method_query: str = ".b-fight-details__label:contains('Method:') + i::text"
     secondary_finish_method_query: str = ".b-fight-details__label:contains('Details:')"
