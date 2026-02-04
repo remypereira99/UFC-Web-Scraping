@@ -1,4 +1,4 @@
-"""Defines the spider to crawl all fight URLs ufcstats.com and parse fight overview metrics."""
+"""Spider to crawl all fight URLs ufcstats.com and parse fight overview metrics."""
 
 from typing import Any
 
@@ -9,7 +9,7 @@ from ufc_scraper.parsers.fight_info_parser import FightInfoParser
 
 
 class CrawlFights(scrapy.Spider):
-    """Crawl all fight URLs and yield fight overview metrics."""
+    """Crawl all fight URLs from ufcstats.com and yield fight overview metrics."""
 
     name = "crawl_fights"
 
