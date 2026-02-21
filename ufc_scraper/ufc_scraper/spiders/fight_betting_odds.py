@@ -7,7 +7,7 @@ import scrapy
 from glom import glom  # type: ignore[import-untyped]
 
 from ufc_scraper.parsers.fight_odds_parser import FightOddsParser
-from constants import (
+from .constants import (
     FIGHTODDS_API_URL as URL,
     FIGHTODDS_API_HEADERS as HEADERS,
     FIGHTODDS_API_GQL_EVENT_ODDS_QUERY as GQL_EVENT_ODDS_QUERY,
@@ -30,19 +30,19 @@ class CrawlFightBettingOdds(scrapy.Spider):
     }
 
     def __init__(
-        self, date_gte: str | None = None, date_lt: str | None = None, **kwargs: Any
+        self, start_date: str | None = None, end_date: str | None = None, **kwargs: Any
     ):
         """Initialise spider with optional date range filters.
 
         Args:
-            date_gte: Include events on or after this date (YYYY-MM-DD).
-            date_lt: Include events before this date (YYYY-MM-DD).
+            start_date: Include events on or after this date (YYYY-MM-DD).
+            end_date: Include events before this date (YYYY-MM-DD).
             **kwargs: Passed through to the scrapy.Spider base class.
 
         """
         super().__init__(**kwargs)
-        self._date_gte = date_gte
-        self._date_lt = date_lt
+        self._start_date = start_date
+        self._end_date = end_date
 
     def start_requests(self, after: str = "") -> Any:
         """Issue the initial events list request, with optional pagination cursor."""
@@ -53,8 +53,8 @@ class CrawlFightBettingOdds(scrapy.Spider):
                 "after": after,
                 "first": 10,
                 "orderBy": "-date",
-                "dateGte": self._date_gte,
-                "dateLt": self._date_lt,
+                "dateGte": self._start_date,
+                "dateLt": self._end_date,
             },
             "query": GQL_EVENTS_QUERY,
         }

@@ -17,7 +17,7 @@ query EventsPromotionRecentQuery(
   $orderBy: String
 ) {
   promotion: promotionBySlug(slug: $promotionSlug) {
-    events(first: $first, after: $after, date_Gte: $dateGte, date_Lt: $dateLt, orderBy: $orderBy) {
+    events(first: $first, after: $after, start_date: $dateGte, end_date: $dateLt, orderBy: $orderBy) {
       edges {
         node {
           pk
