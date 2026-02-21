@@ -5,7 +5,7 @@ from typing import Any
 import scrapy
 from scrapy.http import Response
 
-from ufc_scraper.parsers.fighter_info_parser import FighterInfoParser
+from ufcstats.parsers.fighter_info_parser import FighterInfoParser
 
 
 class CrawlFighters(scrapy.Spider):

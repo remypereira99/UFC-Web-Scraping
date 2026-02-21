@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from scrapy.http import Response
 
 from . import WEIGHT_CLASSES_LOWER
-from ufc_scraper.parsers.base_parser import Parser
+from ufcstats.parsers.base_parser import Parser
 from entities import Fight
 from utils import (
     clean_string,
