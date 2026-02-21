@@ -7,7 +7,7 @@ import scrapy
 from glom import glom  # type: ignore[import-untyped]
 
 from ufc_scraper.parsers.fight_odds_parser import FightOddsParser
-from ufc_scraper.ufc_scraper.spiders.constants import (
+from constants import (
     FIGHTODDS_API_URL as URL,
     FIGHTODDS_API_HEADERS as HEADERS,
     FIGHTODDS_API_GQL_EVENT_ODDS_QUERY as GQL_EVENT_ODDS_QUERY,
