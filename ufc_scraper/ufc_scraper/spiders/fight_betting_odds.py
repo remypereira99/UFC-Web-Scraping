@@ -1,0 +1,207 @@
+"""Defines the spider to crawl all fight URLs from fightodds.io and parse fight betting odds."""
+
+import json
+from typing import Any
+
+import scrapy
+from glom import glom  # type: ignore[import-untyped]
+
+from ufc_scraper.parsers.fight_odds_parser import FightOddsParser
+
+URL = "https://api.fightodds.io/gql"
+
+HEADERS = {
+    "Content-Type": "application/json",
+    "User-Agent": "Mozilla/5.0",
+}
+
+# Query 1: paginated list of UFC events
+GQL_EVENTS_QUERY = """
+query EventsPromotionRecentQuery(
+  $promotionSlug: String
+  $dateLt: Date
+  $dateGte: Date
+  $after: String
+  $first: Int
+  $orderBy: String
+) {
+  promotion: promotionBySlug(slug: $promotionSlug) {
+    events(first: $first, after: $after, date_Gte: $dateGte, date_Lt: $dateLt, orderBy: $orderBy) {
+      edges {
+        node {
+          pk
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+"""
+
+# Query 2: fight slugs for a given event pk
+GQL_EVENT_ODDS_QUERY = """
+query EventOddsQuery($eventPk: Int!) {
+  eventOfferTable(pk: $eventPk) {
+    fightOffers {
+      edges {
+        node {
+          slug
+          isCancelled
+        }
+      }
+    }
+  }
+}
+"""
+
+# Query 3: per-sportsbook odds for a given fight slug
+GQL_FIGHT_ODDS_QUERY = """
+query FightOddsQuery($fightSlug: String) {
+  fightOfferTable(slug: $fightSlug) {
+    slug
+    fighter1 {
+      firstName
+      lastName
+      id
+    }
+    fighter2 {
+      firstName
+      lastName
+      id
+    }
+    bestOdds1
+    bestOdds2
+    straightOffers {
+      edges {
+        node {
+          sportsbook {
+            shortName
+            slug
+          }
+          outcome1 {
+            odds
+            oddsOpen
+            oddsBest
+            oddsWorst
+            oddsPrev
+          }
+          outcome2 {
+            odds
+            oddsOpen
+            oddsBest
+            oddsWorst
+            oddsPrev
+          }
+        }
+      }
+    }
+  }
+}
+"""
+
+
+class CrawlFightBettingOdds(scrapy.Spider):
+    """Crawl all fight URLs from fightodds.io and yield betting odds per sportsbook."""
+
+    name = "crawl_fight_betting_odds"
+
+    custom_settings = {
+        "AUTOTHROTTLE_ENABLED": True,
+        "AUTOTHROTTLE_START_DELAY": 1,
+        "AUTOTHROTTLE_MAX_DELAY": 10,
+        "AUTOTHROTTLE_TARGET_CONCURRENCY": 1.0,
+        "RANDOMIZE_DOWNLOAD_DELAY": True,
+    }
+
+    def __init__(
+        self, date_gte: str | None = None, date_lt: str | None = None, **kwargs: Any
+    ):
+        """Initialise spider with optional date range filters.
+
+        Args:
+            date_gte: Include events on or after this date (YYYY-MM-DD).
+            date_lt: Include events before this date (YYYY-MM-DD).
+            **kwargs: Passed through to the scrapy.Spider base class.
+
+        """
+        super().__init__(**kwargs)
+        self._date_gte = date_gte
+        self._date_lt = date_lt
+
+    def start_requests(self, after: str = "") -> Any:
+        """Issue the initial events list request, with optional pagination cursor."""
+        payload = {
+            "operationName": "EventsPromotionRecentQuery",
+            "variables": {
+                "promotionSlug": "ufc",
+                "after": after,
+                "first": 10,
+                "orderBy": "-date",
+                "dateGte": self._date_gte,
+                "dateLt": self._date_lt,
+            },
+            "query": GQL_EVENTS_QUERY,
+        }
+        yield scrapy.Request(
+            url=URL,
+            method="POST",
+            headers=HEADERS,
+            body=json.dumps(payload),
+            callback=self._get_event_pks,
+        )
+
+    def _get_event_pks(self, response: Any) -> Any:
+        """Extract event PKs from the events list response and paginate if needed."""
+        json_response = response.json()
+        events_data = glom(json_response, "data.promotion.events")
+        event_edges = events_data["edges"]
+
+        for edge in event_edges:
+            event_pk: int = glom(edge, "node.pk")
+            payload = {
+                "operationName": "EventOddsQuery",
+                "variables": {"eventPk": event_pk},
+                "query": GQL_EVENT_ODDS_QUERY,
+            }
+            yield scrapy.Request(
+                url=URL,
+                method="POST",
+                headers=HEADERS,
+                body=json.dumps(payload),
+                callback=self._get_fight_slugs,
+            )
+
+        page_info = events_data["pageInfo"]
+        if page_info["hasNextPage"]:
+            yield from self.start_requests(after=page_info["endCursor"])
+
+    def _get_fight_slugs(self, response: Any) -> Any:
+        """Extract fight slugs from an event's fight offers and request per-fight odds."""
+        json_response = response.json()
+        fight_edges = glom(json_response, "data.eventOfferTable.fightOffers.edges")
+
+        for edge in fight_edges:
+            if glom(edge, "node.isCancelled"):
+                continue
+            fight_slug: str = glom(edge, "node.slug")
+            payload = {
+                "operationName": "FightOddsQuery",
+                "variables": {"fightSlug": fight_slug},
+                "query": GQL_FIGHT_ODDS_QUERY,
+            }
+            yield scrapy.Request(
+                url=URL,
+                method="POST",
+                headers=HEADERS,
+                body=json.dumps(payload),
+                callback=self._get_fight_odds,
+            )
+
+    def _get_fight_odds(self, response: Any) -> Any:
+        """Parse per-fight odds and yield one FightOdds item per sportsbook."""
+        fight_odds_parser = FightOddsParser(response)
+        yield from fight_odds_parser.parse_response()

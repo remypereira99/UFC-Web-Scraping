@@ -1,0 +1,67 @@
+{
+  "data": {
+    "fightOfferTable": {
+      "slug": "jones-vs-aspinall-66300",
+      "fighter1": {
+        "firstName": "Jon",
+        "lastName": "Jones",
+        "id": "RmlnaHRlck5vZGU6MQ=="
+      },
+      "fighter2": {
+        "firstName": "Tom",
+        "lastName": "Aspinall",
+        "id": "RmlnaHRlck5vZGU6Mg=="
+      },
+      "bestOdds1": -175,
+      "bestOdds2": 145,
+      "straightOffers": {
+        "edges": [
+          {
+            "node": {
+              "sportsbook": {
+                "shortName": "DraftKings",
+                "slug": "draftkings"
+              },
+              "outcome1": {
+                "odds": -180,
+                "oddsOpen": -200,
+                "oddsBest": -175,
+                "oddsWorst": -210,
+                "oddsPrev": -185
+              },
+              "outcome2": {
+                "odds": 150,
+                "oddsOpen": 165,
+                "oddsBest": 155,
+                "oddsWorst": 140,
+                "oddsPrev": 145
+              }
+            }
+          },
+          {
+            "node": {
+              "sportsbook": {
+                "shortName": "BetMGM",
+                "slug": "betmgm"
+              },
+              "outcome1": {
+                "odds": -175,
+                "oddsOpen": -190,
+                "oddsBest": -170,
+                "oddsWorst": -200,
+                "oddsPrev": -180
+              },
+              "outcome2": {
+                "odds": 145,
+                "oddsOpen": 160,
+                "oddsBest": 150,
+                "oddsWorst": 135,
+                "oddsPrev": 140
+              }
+            }
+          }
+        ]
+      }
+    }
+  }
+}

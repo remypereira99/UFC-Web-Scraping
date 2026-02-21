@@ -1,4 +1,4 @@
-"""Defines the spider to crawl all event URLs ufcstats.com and parse event overview metrics."""
+"""Spider to crawl all event URLs ufcstats.com and parse event overview metrics."""
 
 from typing import Any
 
@@ -9,7 +9,7 @@ from ufc_scraper.parsers.event_info_parser import EventInfoParser
 
 
 class CrawlEvents(scrapy.Spider):
-    """Crawl all event URLs and yield event overview metrics."""
+    """Crawl all event URLs from ufcstats.com and yield event overview metrics."""
 
     name = "crawl_events"
 
