@@ -7,101 +7,13 @@ import scrapy
 from glom import glom  # type: ignore[import-untyped]
 
 from ufc_scraper.parsers.fight_odds_parser import FightOddsParser
-
-URL = "https://api.fightodds.io/gql"
-
-HEADERS = {
-    "Content-Type": "application/json",
-    "User-Agent": "Mozilla/5.0",
-}
-
-# Query 1: paginated list of UFC events
-GQL_EVENTS_QUERY = """
-query EventsPromotionRecentQuery(
-  $promotionSlug: String
-  $dateLt: Date
-  $dateGte: Date
-  $after: String
-  $first: Int
-  $orderBy: String
-) {
-  promotion: promotionBySlug(slug: $promotionSlug) {
-    events(first: $first, after: $after, date_Gte: $dateGte, date_Lt: $dateLt, orderBy: $orderBy) {
-      edges {
-        node {
-          pk
-        }
-        cursor
-      }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
-    }
-  }
-}
-"""
-
-# Query 2: fight slugs for a given event pk
-GQL_EVENT_ODDS_QUERY = """
-query EventOddsQuery($eventPk: Int!) {
-  eventOfferTable(pk: $eventPk) {
-    fightOffers {
-      edges {
-        node {
-          slug
-          isCancelled
-        }
-      }
-    }
-  }
-}
-"""
-
-# Query 3: per-sportsbook odds for a given fight slug
-GQL_FIGHT_ODDS_QUERY = """
-query FightOddsQuery($fightSlug: String) {
-  fightOfferTable(slug: $fightSlug) {
-    slug
-    fighter1 {
-      firstName
-      lastName
-      id
-    }
-    fighter2 {
-      firstName
-      lastName
-      id
-    }
-    bestOdds1
-    bestOdds2
-    straightOffers {
-      edges {
-        node {
-          sportsbook {
-            shortName
-            slug
-          }
-          outcome1 {
-            odds
-            oddsOpen
-            oddsBest
-            oddsWorst
-            oddsPrev
-          }
-          outcome2 {
-            odds
-            oddsOpen
-            oddsBest
-            oddsWorst
-            oddsPrev
-          }
-        }
-      }
-    }
-  }
-}
-"""
+from ufc_scraper.ufc_scraper.spiders.constants import (
+    FIGHTODDS_API_URL as URL,
+    FIGHTODDS_API_HEADERS as HEADERS,
+    FIGHTODDS_API_GQL_EVENT_ODDS_QUERY as GQL_EVENT_ODDS_QUERY,
+    FIGHTODDS_API_GQL_EVENTS_QUERY as GQL_EVENTS_QUERY,
+    FIGHTODDS_API_GQL_FIGHT_ODDS_QUERY as GQL_FIGHT_ODDS_QUERY,
+)
 
 
 class CrawlFightBettingOdds(scrapy.Spider):
