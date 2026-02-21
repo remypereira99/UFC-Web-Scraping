@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 
 from scrapy.http import Response
 
-from ufc_scraper.parsers.base_parser import Parser
+from ufcstats.parsers.base_parser import Parser
 from entities import Event
 from utils import clean_string, get_uuid_string
 

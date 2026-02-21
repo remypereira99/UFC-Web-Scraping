@@ -7,7 +7,7 @@ from typing import Any
 import scrapy
 from glom import glom  # type: ignore[import-untyped]
 
-from ufc_scraper.parsers.fight_odds_parser import FightOddsParser
+from ufcstats.parsers.fight_odds_parser import FightOddsParser
 from .constants import (
     FIGHTODDS_API_URL as URL,
     FIGHTODDS_API_HEADERS as HEADERS,

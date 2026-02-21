@@ -1,4 +1,4 @@
-PROJECT_DIR := ufc_scraper
+PROJECT_DIR := ufcstats
 CRAWL := uv run scrapy crawl
 CRAWL_LIST := events fighters fights fight_stats fight_stats_by_round
 .PHONY: crawl_all crawl_all_output

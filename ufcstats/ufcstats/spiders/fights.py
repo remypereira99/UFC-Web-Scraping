@@ -1,17 +1,17 @@
-"""Spider to crawl all fight URLs on ufcstats.com and parse fight statistics per fighter."""
+"""Spider to crawl all fight URLs ufcstats.com and parse fight overview metrics."""
 
 from typing import Any
 
 import scrapy
 from scrapy.http import Response
 
-from ufc_scraper.parsers.fight_stat_parser import FightStatParser
+from ufcstats.parsers.fight_info_parser import FightInfoParser
 
 
-class CrawlFightStats(scrapy.Spider):
-    """Crawl all fight URLs from ufcstats.com and yield fight statistics per fighter."""
+class CrawlFights(scrapy.Spider):
+    """Crawl all fight URLs from ufcstats.com and yield fight overview metrics."""
 
-    name = "crawl_fight_stats"
+    name = "crawl_fights"
 
     custom_settings = {
         "AUTOTHROTTLE_ENABLED": True,
@@ -38,12 +38,11 @@ class CrawlFightStats(scrapy.Spider):
         """Get all fight urls from each event page."""
         yield from response.follow_all(
             response.css("a[href*='fight-details']::attr(href)").getall(),
-            callback=self._get_fight_stats,
+            callback=self._get_fights,
         )
 
-    def _get_fight_stats(self, response: Response) -> Any:
-        fight_stat_parser = FightStatParser(response)
-        fighter_1_stats, fighter_2_stats = tuple(fight_stat_parser.parse_response())
+    def _get_fights(self, response: Response) -> Any:
+        fight_info_parser = FightInfoParser(response)
+        fight = fight_info_parser.parse_response()
 
-        yield fighter_1_stats
-        yield fighter_2_stats
+        yield fight

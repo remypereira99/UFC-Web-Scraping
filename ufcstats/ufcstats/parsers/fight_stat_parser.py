@@ -13,7 +13,7 @@ from . import (
     TOTALS_STATS_EXPECTED_HEADERS,
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
-from ufc_scraper.parsers.base_parser import Parser
+from ufcstats.parsers.base_parser import Parser
 from entities import FightStats, FightStatsByRound
 from utils import (
     clean_string,

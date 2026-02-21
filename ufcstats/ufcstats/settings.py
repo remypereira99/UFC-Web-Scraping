@@ -1,18 +1,18 @@
-# Scrapy settings for ufc_scraper project
-#
-# For simplicity, this file contains only settings considered important or
-# commonly used. You can find more settings consulting the documentation:
-#
-#     https://docs.scrapy.org/en/latest/topics/settings.html
-#     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-#     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+"""Scrapy settings for ufcstats project.
 
-BOT_NAME = "ufc_scraper"
+For simplicity, this file contains only settings considered important or
+commonly used. You can find more settings consulting the documentation:
+    https://docs.scrapy.org/en/latest/topics/settings.html
+    https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
+    https://docs.scrapy.org/en/latest/topics/spider-middleware.html
+"""
 
-SPIDER_MODULES = ["ufc_scraper.spiders"]
-NEWSPIDER_MODULE = "ufc_scraper.spiders"
+BOT_NAME = "ufcstats"
 
-ADDONS = {}
+SPIDER_MODULES = ["ufcstats.spiders"]
+NEWSPIDER_MODULE = "ufcstats.spiders"
+
+# ADDONS = {}
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
@@ -41,13 +41,13 @@ DOWNLOAD_DELAY = 1
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
-#    "ufc_scraper.middlewares.UfcScraperSpiderMiddleware": 543,
+#    "ufcstats.middlewares.UfcScraperSpiderMiddleware": 543,
 # }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 # DOWNLOADER_MIDDLEWARES = {
-#    "ufc_scraper.middlewares.UfcScraperDownloaderMiddleware": 543,
+#    "ufcstats.middlewares.UfcScraperDownloaderMiddleware": 543,
 # }
 
 # Enable or disable extensions
@@ -59,7 +59,7 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 # ITEM_PIPELINES = {
-#    "ufc_scraper.pipelines.UfcScraperPipeline": 300,
+#    "ufcstats.pipelines.UfcScraperPipeline": 300,
 # }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
