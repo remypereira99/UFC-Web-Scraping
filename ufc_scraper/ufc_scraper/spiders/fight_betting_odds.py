@@ -43,6 +43,7 @@ class CrawlFightBettingOdds(scrapy.Spider):
         super().__init__(**kwargs)
         self._start_date = start_date
         self._end_date = end_date
+        self._num_requests = 10
 
     def start_requests(self, after: str = "") -> Any:
         """Issue the initial events list request, with optional pagination cursor."""
@@ -51,7 +52,7 @@ class CrawlFightBettingOdds(scrapy.Spider):
             "variables": {
                 "promotionSlug": "ufc",
                 "after": after,
-                "first": 10,
+                "first": self._num_requests,
                 "orderBy": "-date",
                 "dateGte": self._start_date,
                 "dateLt": self._end_date,
