@@ -15,6 +15,9 @@ dependencies = [
     "scrapy==2.13.3",
 ]
 
+[tool.mypy]
+exclude = ["ufc_scraper/tests/"]
+
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
 # Unlike Flake8, Ruff doesn't enable pycodestyle warnings (`W`) or
