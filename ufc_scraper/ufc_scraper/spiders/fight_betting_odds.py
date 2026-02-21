@@ -1,5 +1,6 @@
 """Defines the spider to crawl all fight URLs from fightodds.io and parse fight betting odds."""
 
+from datetime import datetime
 import json
 from typing import Any
 
@@ -30,7 +31,10 @@ class CrawlFightBettingOdds(scrapy.Spider):
     }
 
     def __init__(
-        self, start_date: str | None = None, end_date: str | None = None, **kwargs: Any
+        self,
+        start_date: str | None = None,
+        end_date: str | None = datetime.now().strftime("%Y-%m-%d"),
+        **kwargs: Any,
     ):
         """Initialise spider with optional date range filters.
 
