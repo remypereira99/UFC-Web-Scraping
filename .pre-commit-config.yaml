@@ -17,3 +17,4 @@ repos:
   hooks:
     - id: mypy
       args: [--strict, --show-error-codes]
+      additional_dependencies: ["scrapy==2.13.3", "glom>=25.12.0"]
