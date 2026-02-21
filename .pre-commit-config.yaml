@@ -12,13 +12,8 @@ repos:
     - id: ruff-check
       args: [ --fix ]
     - id: ruff-format
-- repo: local
+- repo: https://github.com/pre-commit/mirrors-mypy
+  rev: v1.19.0
   hooks:
     - id: mypy
-      name: mypy
-      stages: [commit]
-      language: system
-      entry: mypy --strict --show-error-codes
-      exclude: ^data_processing/schemas/protobuf|apps/
-      types: [python]
-      pass_filenames: true
+      args: [--strict, --show-error-codes]

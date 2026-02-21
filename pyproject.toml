@@ -7,7 +7,6 @@ requires-python = ">=3.12"
 dependencies = [
     "freezegun>=1.5.5",
     "glom>=25.12.0",
-    "mypy==1.19.0",
     "pandas==2.3.1",
     "pre-commit==4.5.0",
     "pytest>=9.0.2",
