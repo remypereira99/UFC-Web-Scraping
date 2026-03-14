@@ -5,7 +5,7 @@ from typing import Any
 
 import scrapy
 
-from fightodds.parsers.fighter_parser import FighterParser
+from fightodds.fightodds.parsers.fighter_info_parser import FighterParser
 from .constants import (
     FIGHTODDS_API_URL as URL,
     FIGHTODDS_API_HEADERS as HEADERS,
