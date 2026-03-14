@@ -11,13 +11,14 @@ class Fighter:
     scraped_at: str
     fighter_id: str
     fighter_slug: str
+    full_name: str
     first_name: str
-    last_name: str
-    birth_date: Optional[str]
+    last_names: str
+    dob: str
     fighting_style: Optional[str]
     nationality: Optional[str]
     grappling_style: Optional[str]
     height_cm: Optional[float]
     reach_cm: Optional[float]
-    stance: Optional[str]
     leg_reach_cm: Optional[float]
+    stance: Optional[str]
