@@ -42,6 +42,7 @@ class CrawlFightBettingOdds(scrapy.Spider):
         Args:
             start_date: Include events on or after this date (YYYY-MM-DD).
             end_date: Include events before this date (YYYY-MM-DD).
+            num_requests: Maximum number of fights to fetch.
             **kwargs: Passed through to the scrapy.Spider base class.
 
         """
