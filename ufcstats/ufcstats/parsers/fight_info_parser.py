@@ -10,7 +10,7 @@ from scrapy.http import Response
 
 from . import WEIGHT_CLASSES_LOWER
 from ufcstats.parsers.base_parser import Parser
-from entities import Fight
+from entities.fight import Fight
 from utils import (
     clean_string,
     get_uuid_string,

@@ -14,7 +14,8 @@ from . import (
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
 from ufcstats.parsers.base_parser import Parser
-from entities import FightStats, FightStatsByRound
+from entities.fight_stats import FightStats
+from entities.fight_stats_by_round import FightStatsByRound
 from utils import (
     clean_string,
     get_uuid_string,
