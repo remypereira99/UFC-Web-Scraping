@@ -44,8 +44,8 @@ class FighterParser:
             fighting_style=self._fighter["fightingStyle"],
             nationality=self._fighter["nationality"],
             grappling_style=grappling_style,
-            height=self._fighter["height"],
-            reach=self._fighter["reach"],
+            height_cm=self._fighter["height"],
+            reach_cm=self._fighter["reach"],
             stance=self._fighter["stance"],
-            leg_reach=self._fighter["legReach"],
+            leg_reach_cm=self._fighter["legReach"],
         )
