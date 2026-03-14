@@ -1,11 +1,11 @@
-"""Scrapy settings for ufcstats project.
-
-For simplicity, this file contains only settings considered important or
-commonly used. You can find more settings consulting the documentation:
-    https://docs.scrapy.org/en/latest/topics/settings.html
-    https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
-    https://docs.scrapy.org/en/latest/topics/spider-middleware.html
-"""
+# Scrapy settings for fightodds project
+#
+# For simplicity, this file contains only settings considered important or
+# commonly used. You can find more settings consulting the documentation:
+#
+#     https://docs.scrapy.org/en/latest/topics/settings.html
+#     https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
+#     https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 
 import sys
 from pathlib import Path
@@ -13,16 +13,16 @@ from pathlib import Path
 # Add workspace root to sys.path so the shared utils module is importable.
 sys.path.insert(0, str(Path(__file__).parents[2]))
 
-BOT_NAME = "ufcstats"
+BOT_NAME = "fightodds"
 
-SPIDER_MODULES = ["ufcstats.spiders"]
-NEWSPIDER_MODULE = "ufcstats.spiders"
+SPIDER_MODULES = ["fightodds.spiders"]
+NEWSPIDER_MODULE = "fightodds.spiders"
 
-# ADDONS = {}
+ADDONS = {}
 
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
-# USER_AGENT = "ufc_scraper (+http://www.yourdomain.com)"
+# USER_AGENT = "fightodds (+http://www.yourdomain.com)"
 
 # Obey robots.txt rules
 ROBOTSTXT_OBEY = True
@@ -47,13 +47,13 @@ DOWNLOAD_DELAY = 1
 # Enable or disable spider middlewares
 # See https://docs.scrapy.org/en/latest/topics/spider-middleware.html
 # SPIDER_MIDDLEWARES = {
-#    "ufcstats.middlewares.UfcScraperSpiderMiddleware": 543,
+#    "fightodds.middlewares.FightoddsSpiderMiddleware": 543,
 # }
 
 # Enable or disable downloader middlewares
 # See https://docs.scrapy.org/en/latest/topics/downloader-middleware.html
 # DOWNLOADER_MIDDLEWARES = {
-#    "ufcstats.middlewares.UfcScraperDownloaderMiddleware": 543,
+#    "fightodds.middlewares.FightoddsDownloaderMiddleware": 543,
 # }
 
 # Enable or disable extensions
@@ -65,7 +65,7 @@ DOWNLOAD_DELAY = 1
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 # ITEM_PIPELINES = {
-#    "ufcstats.pipelines.UfcScraperPipeline": 300,
+#    "fightodds.pipelines.FightoddsPipeline": 300,
 # }
 
 # Enable and configure the AutoThrottle extension (disabled by default)
