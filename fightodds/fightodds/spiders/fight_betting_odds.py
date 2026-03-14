@@ -34,6 +34,7 @@ class CrawlFightBettingOdds(scrapy.Spider):
         self,
         start_date: str | None = None,
         end_date: str | None = datetime.now().strftime("%Y-%m-%d"),
+        num_requests: int | None = None,
         **kwargs: Any,
     ):
         """Initialise spider with optional date range filters.
@@ -41,13 +42,14 @@ class CrawlFightBettingOdds(scrapy.Spider):
         Args:
             start_date: Include events on or after this date (YYYY-MM-DD).
             end_date: Include events before this date (YYYY-MM-DD).
+            num_requests: Maximum number of fights to fetch.
             **kwargs: Passed through to the scrapy.Spider base class.
 
         """
         super().__init__(**kwargs)
         self._start_date = start_date
         self._end_date = end_date
-        self._num_requests = 10
+        self._num_requests = num_requests
 
     def start_requests(self, after: str = "") -> Any:
         """Issue the initial events list request, with optional pagination cursor."""

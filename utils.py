@@ -1,0 +1,88 @@
+"""Utility functions for UFC data scraping and normalization."""
+
+import re
+from typing import List, Tuple
+from uuid import uuid5, NAMESPACE_URL
+
+
+def clean_string(raw_string: str) -> str:
+    """Normalize whitespace in a string.
+
+    Collapses consecutive whitespace characters (spaces, tabs, newlines, etc.)
+    into a single space and removes leading and trailing whitespace.
+
+    Args:
+        raw_string (str): The input string to clean.
+
+    Returns:
+        str: The cleaned string with normalized whitespace.
+
+    """
+    return re.sub(r"\s+", " ", raw_string).strip()
+
+
+def format_href(url: str) -> str:
+    """Remove the 'www.' subdomain from a URL string.
+
+    Uses a regular expression to strip 'www.' when it appears
+    immediately after the URL scheme (e.g., http:// or https://).
+    This is because the URLs in the hrefs have www. but the URLs
+    on each page don't, so this helps ensure the IDs are consistent.
+
+    Args:
+        url (str): The URL from which the 'www.' subdomain should be removed.
+
+    Returns:
+        str: The normalized URL without the 'www.' subdomain.
+
+    """
+    return re.sub(r"(?<=://)www\.", "", url)
+
+
+def get_uuid_string(input_string: str, should_format_href: bool = True) -> str:
+    """Generate a deterministic UUID string from an input string.
+
+    Uses UUID version 5 (SHA-1 based) with the URL namespace to produce
+    a stable, deterministic UUID.
+
+    Args:
+        input_string (str): The input string used to generate the UUID.
+        should_format_href(bool): Whether or not to format url used in UUID
+
+    Returns:
+        str: The generated UUID represented as a string.
+
+    """
+    if should_format_href:
+        uuid_string = str(
+            uuid5(namespace=NAMESPACE_URL, name=format_href(input_string))
+        )
+    else:
+        uuid_string = str(uuid5(namespace=NAMESPACE_URL, name=input_string))
+    return uuid_string
+
+
+def get_strikes_landed_attempted(fight_stat: str) -> Tuple[int, int]:
+    """Get strikes landed and attempted from fight stat string.
+
+    Args:
+        fight_stat (str): Fight stat with the format "X of Y"
+
+    Returns:
+        tuple[int, int]: A tuple of strikes (landed, attempted)
+
+    Raises:
+        ValueError: If fight_stat does not match the format "X of Y"
+
+    """
+    strikes_attempted_landed_pattern = re.compile(r"^\d+\s+of\s+\d+$")
+    fight_stat_clean = clean_string(fight_stat)
+    if not strikes_attempted_landed_pattern.fullmatch(fight_stat_clean):
+        raise ValueError(
+            f"Invalid fight_stat format: {fight_stat!r}. Expected 'X of Y'."
+        )
+    fight_stat_split: List[str] = fight_stat_clean.split(" of ")
+    landed = int(fight_stat_split[0])
+    attempted = int(fight_stat_split[1])
+
+    return landed, attempted
