@@ -30,8 +30,7 @@ class FighterParser:
 
         """
         grappling_style_names = [
-            edge["node"]["name"]
-            for edge in self._fighter["grapplingStyle"]["edges"]
+            edge["node"]["name"] for edge in self._fighter["grapplingStyle"]["edges"]
         ]
         grappling_style = ", ".join(grappling_style_names) or None
 

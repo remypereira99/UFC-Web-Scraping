@@ -35,12 +35,11 @@ class CrawlFighters(scrapy.Spider):
         super().__init__(**kwargs)
         self._num_requests = num_requests
 
-    def start_requests(self, after: str = "") -> Any:
+    def start_requests(self, after: str | None = None) -> Any:
         """Issue the initial fighters list request, with optional pagination cursor."""
         payload = {
             "operationName": "FightersListQuery",
             "variables": {
-                "promotionSlug": "ufc",
                 "after": after,
                 "first": self._num_requests,
             },
@@ -57,7 +56,7 @@ class CrawlFighters(scrapy.Spider):
     def _get_fighter_slugs(self, response: Any) -> Any:
         """Extract fighter slugs from the fighters list response and paginate if needed."""
         json_response = response.json()
-        fighters_data = json_response["data"]["promotion"]["fighters"]
+        fighters_data = json_response["data"]["allFighters"]
 
         for edge in fighters_data["edges"]:
             fighter_slug: str = edge["node"]["slug"]
@@ -75,7 +74,7 @@ class CrawlFighters(scrapy.Spider):
             )
 
         page_info = fighters_data["pageInfo"]
-        if page_info["hasNextPage"]:
+        if page_info["hasNextPage"] and page_info["endCursor"]:
             yield from self.start_requests(after=page_info["endCursor"])
 
     def _get_fighter(self, response: Any) -> Any:

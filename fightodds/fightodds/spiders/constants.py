@@ -94,21 +94,18 @@ query FightOddsQuery($fightSlug: String) {
 
 FIGHTODDS_API_GQL_FIGHTERS_LIST_QUERY = """
 query FightersListQuery(
-  $promotionSlug: String
   $after: String
   $first: Int
 ) {
-  promotion: promotionBySlug(slug: $promotionSlug) {
-    fighters(first: $first, after: $after) {
-      edges {
-        node {
-          slug
-        }
+  allFighters(first: $first, after: $after) {
+    edges {
+      node {
+        slug
       }
-      pageInfo {
-        hasNextPage
-        endCursor
-      }
+    }
+    pageInfo {
+      hasNextPage
+      endCursor
     }
   }
 }
