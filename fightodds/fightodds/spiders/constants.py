@@ -7,6 +7,54 @@ FIGHTODDS_API_HEADERS = {
     "User-Agent": "Mozilla/5.0",
 }
 
+FIGHTODDS_API_GQL_EVENTS_LIST_QUERY = """
+query EventsListQuery(
+  $promotionSlug: String
+  $dateLt: Date
+  $dateGte: Date
+  $after: String
+  $first: Int
+  $orderBy: String
+) {
+  promotion: promotionBySlug(slug: $promotionSlug) {
+    events(first: $first, after: $after, date_Gte: $dateGte, date_Lt: $dateLt, orderBy: $orderBy) {
+      edges {
+        node {
+          pk
+          id
+          slug
+          name
+          date
+          city
+          state
+          country
+        }
+        cursor
+      }
+      pageInfo {
+        hasNextPage
+        endCursor
+      }
+    }
+  }
+}
+"""
+
+FIGHTODDS_API_GQL_EVENT_FIGHTERS_QUERY = """
+query EventFightersQuery($eventPk: Int!) {
+  eventOfferTable(pk: $eventPk) {
+    fightOffers {
+      edges {
+        node {
+          slug
+          isCancelled
+        }
+      }
+    }
+  }
+}
+"""
+
 FIGHTODDS_API_GQL_EVENTS_QUERY = """
 query EventsPromotionRecentQuery(
   $promotionSlug: String
