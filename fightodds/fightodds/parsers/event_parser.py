@@ -1,7 +1,7 @@
 """Parser for fightodds.io GraphQL JSON event responses."""
 
 from datetime import datetime, timezone
-from typing import Any, Iterator
+from typing import Any, Dict, Iterator
 
 from fightodds.entities.event import Event
 from utils import clean_string, get_uuid_string
@@ -23,17 +23,24 @@ class EventParser:
 
     """
 
-    def __init__(self, event_meta: dict, response: Any) -> None:
+    def __init__(self, event_meta: Dict[str, str], response: Any) -> None:
         self._event_meta = event_meta
         self._fight_offer_table = response.json()["data"]["eventOfferTable"]
 
     def _get_event_location(self) -> None:
-        city = self._event_meta.get("city")
-        state = self._event_meta.get("state")
-        country = self._event_meta.get("country")
-        self._city = clean_string(city) if city else None
-        self._state = clean_string(state) if state else None
-        self._country = clean_string(country) if country else None
+        self._city = None
+        self._state = None
+        self._country = None
+        location_raw = self._event_meta.get("city")
+        if not location_raw:
+            return
+        parts = clean_string(location_raw).split(", ")
+        if len(parts) == 3:
+            self._city, self._state, self._country = parts
+        elif len(parts) == 2:
+            self._city, self._country = parts
+        elif len(parts) == 1:
+            self._city = parts[0]
 
     def _get_fight_slugs(self) -> None:
         edges = self._fight_offer_table["fightOffers"]["edges"]

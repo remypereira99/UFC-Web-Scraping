@@ -87,8 +87,6 @@ class CrawlEvents(scrapy.Spider):
                 "name": node["name"],
                 "date": node["date"],
                 "city": node.get("city"),
-                "state": node.get("state"),
-                "country": node.get("country"),
             }
             payload = {
                 "operationName": "EventFightersQuery",

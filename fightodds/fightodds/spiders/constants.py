@@ -26,8 +26,6 @@ query EventsListQuery(
           name
           date
           city
-          state
-          country
         }
         cursor
       }
