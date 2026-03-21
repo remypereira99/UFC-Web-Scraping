@@ -16,7 +16,7 @@ from . import (
 from ufcstats.parsers.base_parser import Parser
 from entities.fight_stats import FightStats
 from entities.fight_stats_by_round import FightStatsByRound
-from utils import (
+from src.utils import (
     clean_string,
     get_uuid_string,
     get_strikes_landed_attempted,

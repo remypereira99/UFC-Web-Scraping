@@ -23,7 +23,7 @@ dev = [
 ]
 
 [tool.mypy]
-exclude = ["ufc_scraper/tests/", ".*/middlewares\\.py$", ".*/pipelines\\.py$", ".*/items\\.py$", ".*/settings\\.py$"]
+exclude = ["src/ufcstats/tests/", "src/fightodds/tests/", ".*/middlewares\\.py$", ".*/pipelines\\.py$", ".*/items\\.py$", ".*/settings\\.py$"]
 
 [tool.ruff.lint]
 # Enable Pyflakes (`F`) and a subset of the pycodestyle (`E`) codes by default.
@@ -31,7 +31,7 @@ exclude = ["ufc_scraper/tests/", ".*/middlewares\\.py$", ".*/pipelines\\.py$", "
 # McCabe complexity (`C901`) by default.
 select = ["E4", "E7", "E9", "F", "D"]
 ignore = ["D107"]
-exclude = ["ufc_scraper/tests/**/*", "**/middlewares.py", "**/pipelines.py", "**/items.py", "**/settings.py"]
+exclude = ["src/ufcstats/tests/**/*", "src/fightodds/tests/**/*", "**/middlewares.py", "**/pipelines.py", "**/items.py", "**/settings.py"]
 
 [tool.ruff.format]
 quote-style = "double"
