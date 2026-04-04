@@ -5,7 +5,7 @@ from entities import FightStats
 from ufc_scraper.parsers.fight_stat_parser import FightStatParser
 from tests import FIGHT_RESPONSE_VALID_PATH
 from tests.utils import load_html_response_from_file
-from src.utils import get_uuid_string
+from utils import get_uuid_string
 
 
 @pytest.fixture

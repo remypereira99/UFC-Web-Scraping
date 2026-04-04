@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 
 from scrapy.http import Response
 
-from src.utils import get_uuid_string
+from utils import get_uuid_string
 
 
 @dataclass(frozen=True)
