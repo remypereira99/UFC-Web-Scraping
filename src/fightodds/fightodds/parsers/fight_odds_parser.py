@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
-from fightodds.entities.fight_odds import FightOdds
+from fightodds.fightodds.entities.fight_odds import FightOdds
 from utils import get_uuid_string
 
 

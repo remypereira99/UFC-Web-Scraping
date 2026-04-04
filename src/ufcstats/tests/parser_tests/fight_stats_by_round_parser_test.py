@@ -2,10 +2,10 @@ from freezegun import freeze_time
 import pytest
 
 
-from entities import FightStatsByRound
-from ufc_scraper.parsers.fight_stat_parser import FightStatByRoundParser
-from tests import FIGHT_RESPONSE_VALID_PATH
-from tests.utils import load_html_response_from_file
+from ufcstats.entities.fight_stats_by_round import FightStatsByRound
+from ufcstats.ufcstats.parsers.fight_stat_parser import FightStatByRoundParser
+from ufcstats.tests import FIGHT_RESPONSE_VALID_PATH
+from ufcstats.tests.utils import load_html_response_from_file
 from utils import get_uuid_string
 
 

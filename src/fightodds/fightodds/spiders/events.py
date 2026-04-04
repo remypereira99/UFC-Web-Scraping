@@ -7,7 +7,7 @@ from typing import Any, Dict
 import scrapy
 from glom import glom  # type: ignore[import-untyped]
 
-from fightodds.parsers.event_parser import EventParser
+from fightodds.fightodds.parsers.event_parser import EventParser
 from .constants import (
     FIGHTODDS_API_URL as URL,
     FIGHTODDS_API_HEADERS as HEADERS,

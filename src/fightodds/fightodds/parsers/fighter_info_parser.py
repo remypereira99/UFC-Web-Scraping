@@ -3,7 +3,7 @@
 from datetime import datetime, timezone
 from typing import Any, Iterator
 
-from fightodds.entities.fighter import Fighter
+from fightodds.fightodds.entities.fighter import Fighter
 from utils import clean_string
 
 

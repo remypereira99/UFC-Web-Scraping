@@ -13,10 +13,10 @@ from . import (
     TOTALS_STATS_EXPECTED_HEADERS,
     SIGNIFICANT_STRIKES_EXPECTED_HEADERS,
 )
-from ufcstats.parsers.base_parser import Parser
-from entities.fight_stats import FightStats
-from entities.fight_stats_by_round import FightStatsByRound
-from src.utils import (
+from ufcstats.ufcstats.parsers.base_parser import Parser
+from ufcstats.entities.fight_stats import FightStats
+from ufcstats.entities.fight_stats_by_round import FightStatsByRound
+from utils import (
     clean_string,
     get_uuid_string,
     get_strikes_landed_attempted,

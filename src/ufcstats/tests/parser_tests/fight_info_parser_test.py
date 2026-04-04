@@ -1,10 +1,10 @@
 from freezegun import freeze_time
 import pytest
 
-from entities import Fight
-from ufc_scraper.parsers.fight_info_parser import FightInfoParser
-from tests import FIGHT_RESPONSE_VALID_PATH
-from tests.utils import load_html_response_from_file
+from ufcstats.entities.fight import Fight
+from ufcstats.ufcstats.parsers.fight_info_parser import FightInfoParser
+from ufcstats.tests import FIGHT_RESPONSE_VALID_PATH
+from ufcstats.tests.utils import load_html_response_from_file
 from utils import get_uuid_string
 
 
