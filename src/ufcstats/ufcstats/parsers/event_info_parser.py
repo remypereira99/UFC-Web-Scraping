@@ -10,7 +10,7 @@ from scrapy.http import Response
 
 from ufcstats.parsers.base_parser import Parser
 from entities.event import Event
-from src.utils import clean_string, get_uuid_string
+from utils import clean_string, get_uuid_string
 
 
 class EventInfoParser(Parser):
